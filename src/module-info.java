@@ -5,4 +5,5 @@
  * 
  */
 module SocialNetwork {
+	exports socialnetwork;
 }
