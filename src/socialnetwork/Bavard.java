@@ -41,7 +41,7 @@ public class Bavard implements MessageListener {
 	}
 
 	public void envoyerMessage(String contenu) {
-		int bienveillance = personnalite.appliquer(0);
+		float bienveillance = personnalite.appliquer(0f);
 		MessageEvent event = new MessageEvent(this, contenu, bienveillance, nom);
 		messagesVus.add(event.getId());
 		System.out.println(nom + " envoie : " + contenu + " | bienveillance = " + bienveillance);
@@ -50,23 +50,24 @@ public class Bavard implements MessageListener {
 
 	@Override
 	public void messageRecu(MessageEvent event) {
+
 		if (messagesVus.contains(event.getId())) {
 			System.out.println(nom + " ignore le message deja recu.");
 			return;
 		}
+
 		messagesVus.add(event.getId());
-		int nouvelleBienveillance = personnalite.appliquer(event.getBienveillance());
-		MessageEvent messageTransforme = new MessageEvent(
-			event.getId(),
-			this,
-			event.getContenu(),
-			nouvelleBienveillance,
-			event.getAuteur());
+		// Applique la personnalité du bavard à la bienveillance du message reçu
+		float nouvelleBienveillance = personnalite.appliquer(event.getBienveillance());
+		MessageEvent messageTransforme = new MessageEvent(event.getId(),this,event.getContenu(),nouvelleBienveillance,event.getAuteur());
+
 		System.out.println(
 			nom + " recoit \"" + event.getContenu() + "\" de " + event.getAuteur()
 				+ " | bienveillance : " + event.getBienveillance() + " -> " + nouvelleBienveillance);
+
 		retransmettreMessage(messageTransforme);
 	}
+
 
 	private void retransmettreMessage(MessageEvent event) {
 		for (Bavard ami : amis) {

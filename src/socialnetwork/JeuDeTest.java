@@ -6,8 +6,8 @@ public class JeuDeTest {
 
 		Bavard b1 = new Bavard("Antoine", Personnalite.POSITIF);
 		Bavard b2 = new Bavard("Nathan", Personnalite.NEGATIF);
-		Bavard b3 = new Bavard("Pavel", Personnalite.NEUTRE);
-		Bavard b4 = new Bavard("Sorana", Personnalite.POSITIF);
+		Bavard b3 = new Bavard("Pavel", PersonnaliteForte.NEUTRE_FORTE);
+		Bavard b4 = new Bavard("Sorana", PersonnaliteForte.POSITIF_FORTE);
 
 		reseau.ajouterBavard(b1);
 		reseau.ajouterBavard(b2);

@@ -1,14 +1,15 @@
 package socialnetwork;
 
-public final class Personnalite {
-	public static final Personnalite POSITIF = new Personnalite("POSITIF", 2);
-	public static final Personnalite NEGATIF = new Personnalite("NEGATIF", -2);
-	public static final Personnalite NEUTRE = new Personnalite("NEUTRE", 0);
+public class Personnalite {
+
+	public static final Personnalite POSITIF = new Personnalite("POSITIF", 1f);
+	public static final Personnalite NEGATIF = new Personnalite("NEGATIF", -1f);
+	public static final Personnalite NEUTRE = new Personnalite("NEUTRE", 0f);
 
 	private final String nom;
-	private final int variationBienveillance;
+	private final float variationBienveillance;
 
-	private Personnalite(String nom, int variationBienveillance) {
+	public Personnalite(String nom, float variationBienveillance) { 
 		this.nom = nom;
 		this.variationBienveillance = variationBienveillance;
 	}
@@ -17,23 +18,18 @@ public final class Personnalite {
 		return nom;
 	}
 
-	public int getVariationBienveillance() {
+	public float getVariationBienveillance() {
 		return variationBienveillance;
 	}
 
-	public int appliquer(int bienveillance) {
-		int resultat = bienveillance + variationBienveillance;
-		if (resultat > 10) {
-			return 10;
+	public float appliquer(float bienveillance) {
+		float resultat = bienveillance + variationBienveillance;
+		if (resultat > 10f) {
+			return 10f;
 		}
-		if (resultat < -10) {
-			return -10;
+		if (resultat < -10f) {
+			return -10f;
 		}
 		return resultat;
-	}
-
-	@Override
-	public String toString() {
-		return nom;
 	}
 }

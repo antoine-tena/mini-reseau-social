@@ -8,14 +8,14 @@ public class MessageEvent extends EventObject {
 
 	private final UUID id;
 	private final String contenu;
-	private final int bienveillance;
+	private final float bienveillance;
 	private final String auteur;
 
-	public MessageEvent(Object source, String contenu, int bienveillance, String auteur) {
+	public MessageEvent(Object source, String contenu, float bienveillance, String auteur) {
 		this(UUID.randomUUID(), source, contenu, bienveillance, auteur);
 	}
 
-	public MessageEvent(UUID id, Object source, String contenu, int bienveillance, String auteur) {
+	public MessageEvent(UUID id, Object source, String contenu, float bienveillance, String auteur) {
 		super(source);
 		this.id = id;
 		this.contenu = contenu;
@@ -31,7 +31,7 @@ public class MessageEvent extends EventObject {
 		return contenu;
 	}
 
-	public int getBienveillance() {
+	public float getBienveillance() {
 		return bienveillance;
 	}
 
