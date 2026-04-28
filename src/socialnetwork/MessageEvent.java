@@ -1,31 +1,30 @@
 package socialnetwork;
 
 import java.util.EventObject;
-import java.util.Objects;
 import java.util.UUID;
 
 public class MessageEvent extends EventObject {
 	private static final long serialVersionUID = 1L;
 
 	private final UUID id;
-	private final String auteur;
 	private final String contenu;
 	private final int bienveillance;
+	private final String auteur;
 
-	public MessageEvent(Object source, String auteur, String contenu, int bienveillance) {
-		super(Objects.requireNonNull(source, "source ne doit pas etre null"));
-		this.id = UUID.randomUUID();
-		this.auteur = Objects.requireNonNull(auteur, "auteur ne doit pas etre null");
-		this.contenu = Objects.requireNonNull(contenu, "contenu ne doit pas etre null");
+	public MessageEvent(Object source, String contenu, int bienveillance, String auteur) {
+		this(UUID.randomUUID(), source, contenu, bienveillance, auteur);
+	}
+
+	public MessageEvent(UUID id, Object source, String contenu, int bienveillance, String auteur) {
+		super(source);
+		this.id = id;
+		this.contenu = contenu;
 		this.bienveillance = bienveillance;
+		this.auteur = auteur;
 	}
 
 	public UUID getId() {
 		return id;
-	}
-
-	public String getAuteur() {
-		return auteur;
 	}
 
 	public String getContenu() {
@@ -34,5 +33,9 @@ public class MessageEvent extends EventObject {
 
 	public int getBienveillance() {
 		return bienveillance;
+	}
+
+	public String getAuteur() {
+		return auteur;
 	}
 }

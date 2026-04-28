@@ -1,17 +1,39 @@
 package socialnetwork;
 
-public enum Personnalite {
-	POSITIF(1),
-	NEGATIF(-1),
-	NEUTRE(0);
+public final class Personnalite {
+	public static final Personnalite POSITIF = new Personnalite("POSITIF", 2);
+	public static final Personnalite NEGATIF = new Personnalite("NEGATIF", -2);
+	public static final Personnalite NEUTRE = new Personnalite("NEUTRE", 0);
 
-	private final int bienveillance;
+	private final String nom;
+	private final int variationBienveillance;
 
-	Personnalite(int bienveillance) {
-		this.bienveillance = bienveillance;
+	private Personnalite(String nom, int variationBienveillance) {
+		this.nom = nom;
+		this.variationBienveillance = variationBienveillance;
 	}
 
-	public int getBienveillance() {
-		return bienveillance;
+	public String getNom() {
+		return nom;
+	}
+
+	public int getVariationBienveillance() {
+		return variationBienveillance;
+	}
+
+	public int appliquer(int bienveillance) {
+		int resultat = bienveillance + variationBienveillance;
+		if (resultat > 10) {
+			return 10;
+		}
+		if (resultat < -10) {
+			return -10;
+		}
+		return resultat;
+	}
+
+	@Override
+	public String toString() {
+		return nom;
 	}
 }

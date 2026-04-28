@@ -3,21 +3,20 @@ package socialnetwork;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
 public class Bavard implements MessageListener {
 	private final String nom;
 	private final Personnalite personnalite;
+	private final List<Bavard> amis;
 	private final Set<UUID> messagesVus;
-	private final List<MessageListener> amis;
 
 	public Bavard(String nom, Personnalite personnalite) {
-		this.nom = Objects.requireNonNull(nom, "nom ne doit pas etre null");
-		this.personnalite = Objects.requireNonNull(personnalite, "personnalite ne doit pas etre null");
-		this.messagesVus = new HashSet<>();
+		this.nom = nom;
+		this.personnalite = personnalite;
 		this.amis = new ArrayList<>();
+		this.messagesVus = new HashSet<>();
 	}
 
 	public String getNom() {
@@ -28,31 +27,50 @@ public class Bavard implements MessageListener {
 		return personnalite;
 	}
 
-	public Set<UUID> getMessagesVus() {
-		return Set.copyOf(messagesVus);
-	}
-
-	public List<MessageListener> getAmis() {
-		return List.copyOf(amis);
-	}
-
-	public void ajouterAmi(MessageListener ami) {
-		Objects.requireNonNull(ami, "ami ne doit pas etre null");
-		if (!amis.contains(ami)) {
-			amis.add(ami);
+	public void ajouterAmi(Bavard ami) {
+		if (ami == null) {
+			return;
 		}
+		if (ami == this) {
+			return;
+		}
+		if (amis.contains(ami)) {
+			return;
+		}
+		amis.add(ami);
 	}
 
-	public void envoyerMessage(String texte) {
-		MessageEvent event = new MessageEvent(this, nom, texte, personnalite.getBienveillance());
-		for (MessageListener ami : amis) {
-			ami.messageRecu(event);
-		}
+	public void envoyerMessage(String contenu) {
+		int bienveillance = personnalite.appliquer(0);
+		MessageEvent event = new MessageEvent(this, contenu, bienveillance, nom);
+		messagesVus.add(event.getId());
+		System.out.println(nom + " envoie : " + contenu + " | bienveillance = " + bienveillance);
+		retransmettreMessage(event);
 	}
 
 	@Override
 	public void messageRecu(MessageEvent event) {
-		Objects.requireNonNull(event, "event ne doit pas etre null");
+		if (messagesVus.contains(event.getId())) {
+			System.out.println(nom + " ignore le message deja recu.");
+			return;
+		}
 		messagesVus.add(event.getId());
+		int nouvelleBienveillance = personnalite.appliquer(event.getBienveillance());
+		MessageEvent messageTransforme = new MessageEvent(
+			event.getId(),
+			this,
+			event.getContenu(),
+			nouvelleBienveillance,
+			event.getAuteur());
+		System.out.println(
+			nom + " recoit \"" + event.getContenu() + "\" de " + event.getAuteur()
+				+ " | bienveillance : " + event.getBienveillance() + " -> " + nouvelleBienveillance);
+		retransmettreMessage(messageTransforme);
+	}
+
+	private void retransmettreMessage(MessageEvent event) {
+		for (Bavard ami : amis) {
+			ami.messageRecu(event);
+		}
 	}
 }
