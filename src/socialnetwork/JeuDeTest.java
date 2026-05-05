@@ -8,7 +8,7 @@ public class JeuDeTest {
 		testBorneBienveillance();
 	}
 
-	// start with 2 people
+	// debut simple avec 2 bavards
 	private static void testSimple() {
 		System.out.println("test 1 - 2 bavards");
 
@@ -24,7 +24,7 @@ public class JeuDeTest {
 		System.out.println();
 	}
 
-	// cycle to check loop stop
+	// ici il y a une boucle
 	private static void testAvecBoucle() {
 		System.out.println("test 2 - triangle avec boucle");
 
@@ -46,7 +46,7 @@ public class JeuDeTest {
 		System.out.println();
 	}
 
-	// bigger graph with mixed people
+	// graphe un peu plus grand
 	private static void testReseauPlusGrand() {
 		System.out.println("test 3 - propagation dans un graphe");
 
@@ -73,7 +73,7 @@ public class JeuDeTest {
 		System.out.println();
 	}
 
-	// value must stop at 10
+	// on verifie la borne max
 	private static void testBorneBienveillance() {
 		System.out.println("test 4 - borne de bienveillance");
 

@@ -23,7 +23,7 @@ public class MessageEvent extends EventObject {
 		this.auteur = auteur;
 	}
 
-	// keep asked range
+	// reste entre -10 et 10
 	private int bornerBienveillance(int valeur) {
 		if (valeur > 10) {
 			return 10;

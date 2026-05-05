@@ -10,7 +10,7 @@ public class Bavard implements MessageListener {
 	private final String nom;
 	private final Personnalite personnalite;
 	private final List<Bavard> amis;
-	// same id = same message
+	// un id = un message deja vu
 	private final Set<UUID> messagesVus;
 
 	public Bavard(String nom, Personnalite personnalite) {
@@ -84,7 +84,7 @@ public class Bavard implements MessageListener {
 
 	private void retransmettreMessage(MessageEvent event, Bavard expediteur) {
 		for (Bavard ami : amis) {
-			// avoid direct return
+			// evite de le renvoyer direct
 			if (ami == expediteur) {
 				continue;
 			}
