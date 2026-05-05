@@ -1,4 +1,5 @@
 module SocialNetwork {
 	requires java.desktop;
-	exports socialnetwork;
+	exports socialnetwork.back;
+	exports socialnetwork.front;
 }

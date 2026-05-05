@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.front;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
@@ -18,6 +18,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+
+import socialnetwork.back.Bavard;
+import socialnetwork.back.Personnalite;
+import socialnetwork.back.PersonnaliteForte;
+import socialnetwork.back.Reseau;
 
 public class FenetreReseau extends JFrame {
 	private final Reseau reseau;

@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.back;
 
 import java.util.ArrayList;
 import java.util.HashSet;

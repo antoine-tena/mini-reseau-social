@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.back;
 
 public class JeuDeTest {
 	public static void main(String[] args) {

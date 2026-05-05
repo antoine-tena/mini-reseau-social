@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.front;
 
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;

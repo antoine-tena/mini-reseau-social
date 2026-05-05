@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.back;
 
 public interface BavardObserver {
 	// quand un nouveau message arrive dans la fenetre

@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.back;
 
 import java.util.concurrent.ThreadLocalRandom;
 

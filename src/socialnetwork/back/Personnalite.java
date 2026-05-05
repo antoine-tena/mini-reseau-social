@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.back;
 
 public class Personnalite {
 	// chaque perso a juste une variation fixe
