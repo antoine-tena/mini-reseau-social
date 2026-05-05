@@ -58,8 +58,8 @@ public class JeuDeTest {
 		Bavard noah = new Bavard("Noah", Personnalite.NEUTRE);
 		Bavard lea = new Bavard("Lea", Personnalite.POSITIF);
 		Bavard yassine = new Bavard("Yassine", Personnalite.NEGATIF);
-		Bavard chloe = new Bavard("Chloe", Personnalite.POSITIF);
-		Bavard sam = new Bavard("Sam", Personnalite.NEUTRE);
+		Bavard chloe = new Bavard("Chloe", PersonnaliteForte.POSITIF_FORTE);
+		Bavard sam = new Bavard("Sam", PersonnaliteForte.NEUTRE_FORTE);
 
 		reseau.ajouterBavard(noah);
 		reseau.ajouterBavard(lea);
@@ -82,29 +82,18 @@ public class JeuDeTest {
 	private static void testBorneBienveillance() {
 		System.out.println("test 4 - borne de bienveillance");
 
-		// chaine de profils positifs
+		// chaine simple assez longue pour monter a 10
 		Reseau reseau = new Reseau();
-		Bavard b1 = new Bavard("B1", Personnalite.POSITIF);
-		Bavard b2 = new Bavard("B2", Personnalite.POSITIF);
-		Bavard b3 = new Bavard("B3", Personnalite.POSITIF);
-		Bavard b4 = new Bavard("B4", Personnalite.POSITIF);
-		Bavard b5 = new Bavard("B5", Personnalite.POSITIF);
-		Bavard b6 = new Bavard("B6", Personnalite.POSITIF);
+		Bavard[] bavards = new Bavard[10];
+		for (int i = 0; i < bavards.length; i++) {
+			bavards[i] = new Bavard("B" + (i + 1), Personnalite.POSITIF);
+			reseau.ajouterBavard(bavards[i]);
+			if (i > 0) {
+				reseau.connecter(bavards[i - 1], bavards[i]);
+			}
+		}
 
-		reseau.ajouterBavard(b1);
-		reseau.ajouterBavard(b2);
-		reseau.ajouterBavard(b3);
-		reseau.ajouterBavard(b4);
-		reseau.ajouterBavard(b5);
-		reseau.ajouterBavard(b6);
-
-		reseau.connecter(b1, b2);
-		reseau.connecter(b2, b3);
-		reseau.connecter(b3, b4);
-		reseau.connecter(b4, b5);
-		reseau.connecter(b5, b6);
-
-		b1.envoyerMessage("message tres positif");
+		bavards[0].envoyerMessage("message tres positif");
 		System.out.println("on doit voir la valeur bloquee a 10 a la fin");
 	}
 }

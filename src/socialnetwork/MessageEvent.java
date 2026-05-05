@@ -9,15 +9,15 @@ public class MessageEvent extends EventObject {
 	// sert a reconnaitre le meme message
 	private final UUID id;
 	private final String contenu;
-	private final int bienveillance;
+	private final float bienveillance;
 	private final String auteur;
 
-	public MessageEvent(Object source, String contenu, int bienveillance, String auteur) {
+	public MessageEvent(Object source, String contenu, float bienveillance, String auteur) {
 		// premier envoi donc nouvel id
 		this(UUID.randomUUID(), source, contenu, bienveillance, auteur);
 	}
 
-	public MessageEvent(UUID id, Object source, String contenu, int bienveillance, String auteur) {
+	public MessageEvent(UUID id, Object source, String contenu, float bienveillance, String auteur) {
 		super(source);
 		// quand on retransmet on garde le meme id
 		this.id = id;
@@ -27,12 +27,12 @@ public class MessageEvent extends EventObject {
 	}
 
 	// reste entre -10 et 10
-	private int bornerBienveillance(int valeur) {
-		if (valeur > 10) {
-			return 10;
+	private float bornerBienveillance(float valeur) {
+		if (valeur > 10f) {
+			return 10f;
 		}
-		if (valeur < -10) {
-			return -10;
+		if (valeur < -10f) {
+			return -10f;
 		}
 		return valeur;
 	}
@@ -45,7 +45,7 @@ public class MessageEvent extends EventObject {
 		return contenu;
 	}
 
-	public int getBienveillance() {
+	public float getBienveillance() {
 		return bienveillance;
 	}
 

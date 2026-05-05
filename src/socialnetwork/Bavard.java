@@ -48,7 +48,7 @@ public class Bavard implements MessageListener {
 			return;
 		}
 		// le message part de 0 puis la perso agit
-		int bienveillance = personnalite.appliquer(0);
+		float bienveillance = personnalite.appliquer(0f);
 		MessageEvent event = new MessageEvent(this, contenu, bienveillance, nom);
 		messagesVus.add(event.getId());
 		System.out.println(nom + " envoie : " + contenu + " | bienveillance = " + bienveillance);
@@ -74,8 +74,8 @@ public class Bavard implements MessageListener {
 
 		messagesVus.add(event.getId());
 		// la perso change la valeur du message
-		int ancienneBienveillance = event.getBienveillance();
-		int nouvelleBienveillance = personnalite.appliquer(ancienneBienveillance);
+		float ancienneBienveillance = event.getBienveillance();
+		float nouvelleBienveillance = personnalite.appliquer(ancienneBienveillance);
 		MessageEvent messageTransforme = new MessageEvent(
 			event.getId(),
 			this,
