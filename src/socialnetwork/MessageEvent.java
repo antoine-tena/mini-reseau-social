@@ -6,17 +6,20 @@ import java.util.UUID;
 public class MessageEvent extends EventObject {
 	private static final long serialVersionUID = 1L;
 
+	// sert a reconnaitre le meme message
 	private final UUID id;
 	private final String contenu;
 	private final int bienveillance;
 	private final String auteur;
 
 	public MessageEvent(Object source, String contenu, int bienveillance, String auteur) {
+		// premier envoi donc nouvel id
 		this(UUID.randomUUID(), source, contenu, bienveillance, auteur);
 	}
 
 	public MessageEvent(UUID id, Object source, String contenu, int bienveillance, String auteur) {
 		super(source);
+		// quand on retransmet on garde le meme id
 		this.id = id;
 		this.contenu = contenu;
 		this.bienveillance = bornerBienveillance(bienveillance);

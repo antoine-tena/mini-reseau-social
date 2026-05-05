@@ -9,6 +9,7 @@ import java.util.UUID;
 public class Bavard implements MessageListener {
 	private final String nom;
 	private final Personnalite personnalite;
+	// les amis a qui on peut parler
 	private final List<Bavard> amis;
 	// un id = un message deja vu
 	private final Set<UUID> messagesVus;
@@ -38,6 +39,7 @@ public class Bavard implements MessageListener {
 		if (amis.contains(ami)) {
 			return;
 		}
+		// evite les doublons dans la liste
 		amis.add(ami);
 	}
 
@@ -45,6 +47,7 @@ public class Bavard implements MessageListener {
 		if (contenu == null || contenu.isBlank()) {
 			return;
 		}
+		// le message part de 0 puis la perso agit
 		int bienveillance = personnalite.appliquer(0);
 		MessageEvent event = new MessageEvent(this, contenu, bienveillance, nom);
 		messagesVus.add(event.getId());
@@ -57,6 +60,7 @@ public class Bavard implements MessageListener {
 		if (event == null) {
 			return;
 		}
+		// si deja vu on stop
 		if (messagesVus.contains(event.getId())) {
 			System.out.println(nom + " ignore \"" + event.getContenu() + "\" deja vu");
 			return;
@@ -64,10 +68,12 @@ public class Bavard implements MessageListener {
 
 		Bavard expediteur = null;
 		if (event.getSource() instanceof Bavard) {
+			// source = dernier bavard passe
 			expediteur = (Bavard) event.getSource();
 		}
 
 		messagesVus.add(event.getId());
+		// la perso change la valeur du message
 		int ancienneBienveillance = event.getBienveillance();
 		int nouvelleBienveillance = personnalite.appliquer(ancienneBienveillance);
 		MessageEvent messageTransforme = new MessageEvent(
@@ -83,6 +89,7 @@ public class Bavard implements MessageListener {
 	}
 
 	private void retransmettreMessage(MessageEvent event, Bavard expediteur) {
+		// on envoie aux amis sauf celui juste avant
 		for (Bavard ami : amis) {
 			// evite de le renvoyer direct
 			if (ami == expediteur) {

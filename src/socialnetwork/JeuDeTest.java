@@ -12,6 +12,7 @@ public class JeuDeTest {
 	private static void testSimple() {
 		System.out.println("test 1 - 2 bavards");
 
+		// un cas tout petit pour voir le debut
 		Reseau reseau = new Reseau();
 		Bavard lucie = new Bavard("Lucie", Personnalite.POSITIF);
 		Bavard tom = new Bavard("Tom", Personnalite.NEGATIF);
@@ -28,6 +29,7 @@ public class JeuDeTest {
 	private static void testAvecBoucle() {
 		System.out.println("test 2 - triangle avec boucle");
 
+		// les 3 sont relies en triangle
 		Reseau reseau = new Reseau();
 		Bavard anna = new Bavard("Anna", Personnalite.POSITIF);
 		Bavard mehdi = new Bavard("Mehdi", Personnalite.NEGATIF);
@@ -41,6 +43,7 @@ public class JeuDeTest {
 		reseau.connecter(mehdi, ines);
 		reseau.connecter(ines, anna);
 
+		// anna doit pas repasser sans fin
 		anna.envoyerMessage("message dans la boucle");
 		System.out.println("fin du test 2 = pas de boucle infinie");
 		System.out.println();
@@ -50,6 +53,7 @@ public class JeuDeTest {
 	private static void testReseauPlusGrand() {
 		System.out.println("test 3 - propagation dans un graphe");
 
+		// ici il y a plusieurs chemins possibles
 		Reseau reseau = new Reseau();
 		Bavard noah = new Bavard("Noah", Personnalite.NEUTRE);
 		Bavard lea = new Bavard("Lea", Personnalite.POSITIF);
@@ -69,6 +73,7 @@ public class JeuDeTest {
 		reseau.connecter(yassine, sam);
 		reseau.connecter(chloe, sam);
 
+		// ici on voit mieux la propagation
 		noah.envoyerMessage("bonjour le reseau");
 		System.out.println();
 	}
@@ -77,6 +82,7 @@ public class JeuDeTest {
 	private static void testBorneBienveillance() {
 		System.out.println("test 4 - borne de bienveillance");
 
+		// chaine de profils positifs
 		Reseau reseau = new Reseau();
 		Bavard b1 = new Bavard("B1", Personnalite.POSITIF);
 		Bavard b2 = new Bavard("B2", Personnalite.POSITIF);
