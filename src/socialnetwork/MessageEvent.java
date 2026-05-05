@@ -52,4 +52,9 @@ public class MessageEvent extends EventObject {
 	public String getAuteur() {
 		return auteur;
 	}
+
+	@Override
+	public String toString() {
+		return auteur + " : " + contenu + " | b = " + String.format("%.2f", bienveillance);
+	}
 }

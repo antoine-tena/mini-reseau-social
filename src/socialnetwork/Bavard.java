@@ -11,14 +11,20 @@ public class Bavard implements MessageListener {
 	private final Personnalite personnalite;
 	// les amis a qui on peut parler
 	private final List<Bavard> amis;
+	// garde les messages transformes recus
+	private final List<MessageEvent> messagesRecus;
 	// un id = un message deja vu
 	private final Set<UUID> messagesVus;
+	// pour prevenir les fenetres
+	private final List<BavardObserver> observateurs;
 
 	public Bavard(String nom, Personnalite personnalite) {
 		this.nom = nom;
 		this.personnalite = personnalite;
 		this.amis = new ArrayList<>();
+		this.messagesRecus = new ArrayList<>();
 		this.messagesVus = new HashSet<>();
+		this.observateurs = new ArrayList<>();
 	}
 
 	public String getNom() {
@@ -27,6 +33,28 @@ public class Bavard implements MessageListener {
 
 	public Personnalite getPersonnalite() {
 		return personnalite;
+	}
+
+	public List<Bavard> getAmis() {
+		return new ArrayList<>(amis);
+	}
+
+	public List<MessageEvent> getMessagesRecus() {
+		return new ArrayList<>(messagesRecus);
+	}
+
+	public void ajouterObservateur(BavardObserver observateur) {
+		if (observateur == null) {
+			return;
+		}
+		if (observateurs.contains(observateur)) {
+			return;
+		}
+		observateurs.add(observateur);
+	}
+
+	public void retirerObservateur(BavardObserver observateur) {
+		observateurs.remove(observateur);
 	}
 
 	public void ajouterAmi(Bavard ami) {
@@ -41,6 +69,7 @@ public class Bavard implements MessageListener {
 		}
 		// evite les doublons dans la liste
 		amis.add(ami);
+		notifierAmisMisAJour();
 	}
 
 	public void envoyerMessage(String contenu) {
@@ -82,10 +111,23 @@ public class Bavard implements MessageListener {
 			event.getContenu(),
 			nouvelleBienveillance,
 			event.getAuteur());
+		messagesRecus.add(messageTransforme);
+		notifierMessageAjoute(messageTransforme);
 		System.out.println(
 			nom + " recoit \"" + event.getContenu() + "\" de " + event.getAuteur()
 				+ " | bienveillance : " + ancienneBienveillance + " -> " + nouvelleBienveillance);
 		retransmettreMessage(messageTransforme, expediteur);
+	}
+
+	public void faireSuivreMessage(MessageEvent message) {
+		if (message == null) {
+			return;
+		}
+		MessageEvent nouveauMessage = new MessageEvent(this, message.getContenu(), message.getBienveillance(), nom);
+		messagesVus.add(nouveauMessage.getId());
+		System.out.println(
+			nom + " fait suivre : " + message.getContenu() + " | bienveillance = " + message.getBienveillance());
+		retransmettreMessage(nouveauMessage, null);
 	}
 
 	private void retransmettreMessage(MessageEvent event, Bavard expediteur) {
@@ -97,5 +139,22 @@ public class Bavard implements MessageListener {
 			}
 			ami.messageRecu(event);
 		}
+	}
+
+	private void notifierMessageAjoute(MessageEvent event) {
+		for (BavardObserver observateur : observateurs) {
+			observateur.messageAjoute(this, event);
+		}
+	}
+
+	private void notifierAmisMisAJour() {
+		for (BavardObserver observateur : observateurs) {
+			observateur.amisMisAJour(this);
+		}
+	}
+
+	@Override
+	public String toString() {
+		return nom;
 	}
 }
