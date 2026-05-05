@@ -19,8 +19,19 @@ public class MessageEvent extends EventObject {
 		super(source);
 		this.id = id;
 		this.contenu = contenu;
-		this.bienveillance = bienveillance;
+		this.bienveillance = bornerBienveillance(bienveillance);
 		this.auteur = auteur;
+	}
+
+	// keep asked range
+	private int bornerBienveillance(int valeur) {
+		if (valeur > 10) {
+			return 10;
+		}
+		if (valeur < -10) {
+			return -10;
+		}
+		return valeur;
 	}
 
 	public UUID getId() {

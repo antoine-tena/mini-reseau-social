@@ -10,6 +10,7 @@ public class Bavard implements MessageListener {
 	private final String nom;
 	private final Personnalite personnalite;
 	private final List<Bavard> amis;
+	// same id = same message
 	private final Set<UUID> messagesVus;
 
 	public Bavard(String nom, Personnalite personnalite) {
@@ -41,21 +42,34 @@ public class Bavard implements MessageListener {
 	}
 
 	public void envoyerMessage(String contenu) {
+		if (contenu == null || contenu.isBlank()) {
+			return;
+		}
 		int bienveillance = personnalite.appliquer(0);
 		MessageEvent event = new MessageEvent(this, contenu, bienveillance, nom);
 		messagesVus.add(event.getId());
 		System.out.println(nom + " envoie : " + contenu + " | bienveillance = " + bienveillance);
-		retransmettreMessage(event);
+		retransmettreMessage(event, null);
 	}
 
 	@Override
 	public void messageRecu(MessageEvent event) {
-		if (messagesVus.contains(event.getId())) {
-			System.out.println(nom + " ignore le message deja recu.");
+		if (event == null) {
 			return;
 		}
+		if (messagesVus.contains(event.getId())) {
+			System.out.println(nom + " ignore \"" + event.getContenu() + "\" deja vu");
+			return;
+		}
+
+		Bavard expediteur = null;
+		if (event.getSource() instanceof Bavard) {
+			expediteur = (Bavard) event.getSource();
+		}
+
 		messagesVus.add(event.getId());
-		int nouvelleBienveillance = personnalite.appliquer(event.getBienveillance());
+		int ancienneBienveillance = event.getBienveillance();
+		int nouvelleBienveillance = personnalite.appliquer(ancienneBienveillance);
 		MessageEvent messageTransforme = new MessageEvent(
 			event.getId(),
 			this,
@@ -64,12 +78,16 @@ public class Bavard implements MessageListener {
 			event.getAuteur());
 		System.out.println(
 			nom + " recoit \"" + event.getContenu() + "\" de " + event.getAuteur()
-				+ " | bienveillance : " + event.getBienveillance() + " -> " + nouvelleBienveillance);
-		retransmettreMessage(messageTransforme);
+				+ " | bienveillance : " + ancienneBienveillance + " -> " + nouvelleBienveillance);
+		retransmettreMessage(messageTransforme, expediteur);
 	}
 
-	private void retransmettreMessage(MessageEvent event) {
+	private void retransmettreMessage(MessageEvent event, Bavard expediteur) {
 		for (Bavard ami : amis) {
+			// avoid direct return
+			if (ami == expediteur) {
+				continue;
+			}
 			ami.messageRecu(event);
 		}
 	}
