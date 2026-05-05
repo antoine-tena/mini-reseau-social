@@ -1,0 +1,78 @@
+Séance 3 — Phase 3 — Interface Graphique
+4h — interface Bavard + interface Réseau
+
+📝 Ce que nous avons fait
+
+On a ajouté une vraie interface graphique simple avec Swing.
+
+On a créé une fenêtre réseau qui permet de créer des bavards, choisir leur personnalité, connecter deux bavards entre eux et lancer une propagation avec un message.
+
+On a aussi créé une fenêtre par bavard. Dans cette fenêtre on peut voir les messages reçus avec leur bienveillance, voir la liste des amis, envoyer un nouveau message et faire suivre un message reçu.
+
+Pour que l'interface se mette à jour quand un bavard reçoit un message ou gagne un ami, on a ajouté un petit système d'observation entre le modèle et les fenêtres.
+
+On a gardé les tests console de la séance 2 et on a vérifié qu'ils fonctionnent encore après l'ajout de l'interface.
+
+
+⚙️ Décisions de conception prises
+
+1. On a choisi Swing pour l'interface
+Pourquoi : c'est déjà dans Java, donc pas besoin d'ajouter une autre librairie, et pour une interface simple ça suffit largement.
+
+2. On a choisi de faire une fenêtre réseau + une fenêtre par bavard
+Pourquoi : c'était le plus clair pour voir le système. La fenêtre réseau sert à construire et lancer, et les fenêtres bavard servent à observer en détail.
+
+3. On a choisi d'ajouter un observer simple sur Bavard
+Pourquoi : sinon les fenêtres ne savaient pas quand actualiser les messages reçus ou les amis. Avec ça on garde une séparation correcte entre le code métier et l'affichage.
+
+4. On a choisi de garder la propagation automatique déjà faite en séance 2
+Pourquoi : on ne voulait pas casser ce qui marchait déjà. Du coup le bouton faire suivre sert surtout à relancer un message reçu depuis un bavard.
+
+5. On a choisi de faire une visualisation texte du réseau
+Pourquoi : le bonus de visualisation complète en graphe aurait pris plus de temps. Là on a au moins un résumé lisible des connexions.
+
+
+🚧 Difficultés rencontrées
+
+Le plus gênant c'était de relier les fenêtres au modèle sans tout mélanger. Si on mettait tout directement dans la GUI, le code devenait vite sale. On a donc ajouté une petite interface d'observation pour rester simple.
+
+On a aussi eu une difficulté avec le fait qu'un bavard retransmet déjà automatiquement les messages. Du coup il fallait réfléchir à quoi sert le bouton faire suivre. On a choisi qu'il relance le message reçu comme une nouvelle propagation.
+
+Il y a aussi eu quelques erreurs de compilation au moment d'ajouter les nouvelles fenêtres Swing. On les a corrigées directement puis on a recompilé tout le projet.
+
+
+💡 Ce que nous avons appris
+
+On a mieux compris comment brancher une interface graphique simple sur un modèle objet déjà existant.
+
+On a aussi vu que même sur un petit projet, séparer la logique métier et l'affichage évite beaucoup de confusion.
+
+
+🎯 Objectif pour la prochaine séance
+
+Améliorer l'ergonomie de l'interface, ajouter si possible une meilleure visualisation du réseau, et finir les comportements bonus sans casser la propagation ni l'anti-boucle.
+
+
+🤖 Utilisation de l'IA (si applicable)
+
+On a utilisé l'IA comme aide ponctuelle.
+
+Exemples de prompts utilisés :
+- "idee simple d'interface swing java avec une fenetre principale et plusieurs petites fenetres"
+- "comment afficher une liste de messages recus dans une jlist"
+- "prénoms simples pour des bavards dans un exemple de reseau"
+
+Ce qu'on a gardé :
+- l'idée d'une interface Swing simple
+- l'idée d'une fenetre réseau + une fenetre par bavard
+- quelques prénoms pour les exemples
+
+Ce qu'on a modifié :
+- l'organisation exacte des boutons
+- la façon de relier la GUI aux objets Bavard
+- le comportement précis du bouton faire suivre
+
+Ce qu'on a rejeté :
+- les propositions trop complexes
+- les interfaces trop chargées
+- les idées qui demandaient trop de code pour un bonus
