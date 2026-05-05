@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Reseau {
+	// liste simple de tous les bavards
 	private final List<Bavard> bavards;
 
 	public Reseau() {
@@ -30,6 +31,7 @@ public class Reseau {
 		if (premierBavard == deuxiemeBavard) {
 			return;
 		}
+		// lien dans les 2 sens
 		premierBavard.ajouterAmi(deuxiemeBavard);
 		deuxiemeBavard.ajouterAmi(premierBavard);
 	}

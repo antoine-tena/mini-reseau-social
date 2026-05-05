@@ -1,6 +1,7 @@
 package socialnetwork;
 
 public final class Personnalite {
+	// chaque perso a juste une variation fixe
 	public static final Personnalite POSITIF = new Personnalite("POSITIF", 2);
 	public static final Personnalite NEGATIF = new Personnalite("NEGATIF", -2);
 	public static final Personnalite NEUTRE = new Personnalite("NEUTRE", 0);
@@ -22,6 +23,7 @@ public final class Personnalite {
 	}
 
 	public int appliquer(int bienveillance) {
+		// ajoute ou retire selon la perso
 		int resultat = bienveillance + variationBienveillance;
 		if (resultat > 10) {
 			return 10;
