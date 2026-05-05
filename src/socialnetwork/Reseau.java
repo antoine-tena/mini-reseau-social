@@ -37,6 +37,6 @@ public class Reseau {
 	}
 
 	public List<Bavard> getBavards() {
-		return bavards;
+		return new ArrayList<>(bavards);
 	}
 }
