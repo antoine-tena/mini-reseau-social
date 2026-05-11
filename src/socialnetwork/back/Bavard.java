@@ -6,6 +6,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Un utilisateur du reseau: il recoit, transforme et transmet des messages.
+ * Sert aussi de source d'evenements pour les fenetres (observer).
+ */
 public class Bavard implements MessageListener {
 	private final String nom;
 	private final Personnalite personnalite;
@@ -18,6 +22,9 @@ public class Bavard implements MessageListener {
 	// pour prevenir les fenetres
 	private final List<BavardObserver> observateurs;
 
+	/**
+	 * Cree un bavard avec un nom et une personnalite.
+	 */
 	public Bavard(String nom, Personnalite personnalite) {
 		this.nom = nom;
 		this.personnalite = personnalite;
@@ -43,6 +50,9 @@ public class Bavard implements MessageListener {
 		return new ArrayList<>(messagesRecus);
 	}
 
+	/**
+	 * Inscrit une fenetre (observer) pour etre notifiee des changements.
+	 */
 	public void ajouterObservateur(BavardObserver observateur) {
 		if (observateur == null) {
 			return;
@@ -57,6 +67,9 @@ public class Bavard implements MessageListener {
 		observateurs.remove(observateur);
 	}
 
+	/**
+	 * Ajoute un ami et notifie les observers si la liste change.
+	 */
 	public void ajouterAmi(Bavard ami) {
 		if (ami == null) {
 			return;
@@ -72,6 +85,10 @@ public class Bavard implements MessageListener {
 		notifierAmisMisAJour();
 	}
 
+	/**
+	 * Envoie un message local puis le propage aux amis.
+	 */
+
 	public void envoyerMessage(String contenu) {
 		if (contenu == null || contenu.isBlank()) {
 			return;
@@ -85,6 +102,9 @@ public class Bavard implements MessageListener {
 	}
 
 	@Override
+	/**
+	 * Recoit un message, le transforme selon la personnalite puis le retransmet.
+	 */
 	public void messageRecu(MessageEvent event) {
 		if (event == null) {
 			return;
@@ -99,7 +119,7 @@ public class Bavard implements MessageListener {
 		if (event.getSource() instanceof Bavard) {
 			// source = dernier bavard passe
 			expediteur = (Bavard) event.getSource();
-		}
+		} 
 
 		messagesVus.add(event.getId());
 		// la perso change la valeur du message
@@ -119,6 +139,9 @@ public class Bavard implements MessageListener {
 		retransmettreMessage(messageTransforme, expediteur);
 	}
 
+	/**
+	 * Relance un message recu en tant que nouveau message.
+	 */
 	public void faireSuivreMessage(MessageEvent message) {
 		if (message == null) {
 			return;
@@ -130,10 +153,10 @@ public class Bavard implements MessageListener {
 		retransmettreMessage(nouveauMessage, null);
 	}
 
+	// Propage aux amis en evitant celui qui vient d'envoyer.
 	private void retransmettreMessage(MessageEvent event, Bavard expediteur) {
 		// on envoie aux amis sauf celui juste avant
 		for (Bavard ami : amis) {
-			// evite de le renvoyer direct
 			if (ami == expediteur) {
 				continue;
 			}
@@ -141,12 +164,14 @@ public class Bavard implements MessageListener {
 		}
 	}
 
+	// Notifie les observers que la liste de messages a change.
 	private void notifierMessageAjoute(MessageEvent event) {
 		for (BavardObserver observateur : observateurs) {
 			observateur.messageAjoute(this, event);
 		}
 	}
 
+	// Notifie les observers que la liste d'amis a change.
 	private void notifierAmisMisAJour() {
 		for (BavardObserver observateur : observateurs) {
 			observateur.amisMisAJour(this);

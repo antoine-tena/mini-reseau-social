@@ -1,5 +1,8 @@
 package socialnetwork.back;
 
+/**
+ * Regle simple: applique une variation fixe de bienveillance.
+ */
 public class Personnalite {
 	// chaque perso a juste une variation fixe
 	public static final Personnalite POSITIF = new Personnalite("POSITIF", 1f);
@@ -22,6 +25,9 @@ public class Personnalite {
 		return variationBienveillance;
 	}
 
+	/**
+	 * Modifie la bienveillance en appliquant la variation.
+	 */
 	public float appliquer(float bienveillance) {
 		// ajoute ou retire selon la perso
 		float resultat = bienveillance + variationBienveillance;
