@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.back;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -8,7 +8,7 @@ import java.util.UUID;
 
 /**
  * Un utilisateur du reseau: il recoit, transforme et transmet des messages.
- * Sert aussi de source d'evenements pour l'interface (observer).
+ * Sert aussi de source d'evenements pour les fenetres (observer).
  */
 public class Bavard implements MessageListener {
 	private final String nom;
@@ -63,9 +63,6 @@ public class Bavard implements MessageListener {
 		observateurs.add(observateur);
 	}
 
-	/**
-	 * Retire un observer UI.
-	 */
 	public void retirerObservateur(BavardObserver observateur) {
 		observateurs.remove(observateur);
 	}
@@ -91,6 +88,7 @@ public class Bavard implements MessageListener {
 	/**
 	 * Envoie un message local puis le propage aux amis.
 	 */
+
 	public void envoyerMessage(String contenu) {
 		if (contenu == null || contenu.isBlank()) {
 			return;
@@ -103,10 +101,10 @@ public class Bavard implements MessageListener {
 		retransmettreMessage(event, null);
 	}
 
+	@Override
 	/**
 	 * Recoit un message, le transforme selon la personnalite puis le retransmet.
 	 */
-	@Override
 	public void messageRecu(MessageEvent event) {
 		if (event == null) {
 			return;
@@ -121,7 +119,7 @@ public class Bavard implements MessageListener {
 		if (event.getSource() instanceof Bavard) {
 			// source = dernier bavard passe
 			expediteur = (Bavard) event.getSource();
-		}
+		} 
 
 		messagesVus.add(event.getId());
 		// la perso change la valeur du message
@@ -159,7 +157,6 @@ public class Bavard implements MessageListener {
 	private void retransmettreMessage(MessageEvent event, Bavard expediteur) {
 		// on envoie aux amis sauf celui juste avant
 		for (Bavard ami : amis) {
-			// evite de le renvoyer direct
 			if (ami == expediteur) {
 				continue;
 			}

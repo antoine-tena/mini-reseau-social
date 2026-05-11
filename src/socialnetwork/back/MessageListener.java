@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.back;
 
 /**
  * Recoit un message lors de la propagation.

@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.back;
 
 /**
  * Lancement de tests console pour verifier la propagation.

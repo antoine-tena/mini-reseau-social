@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.back;
 
 /**
  * Observer pour synchroniser l'interface quand un bavard change.

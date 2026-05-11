@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.front;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
@@ -18,6 +18,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+
+import socialnetwork.back.Bavard;
+import socialnetwork.back.Personnalite;
+import socialnetwork.back.PersonnaliteForte;
+import socialnetwork.back.Reseau;
 
 /**
  * Fenetre principale: creation des bavards et actions sur le reseau.
@@ -63,7 +68,7 @@ public class FenetreReseau extends JFrame {
 
 	// Construit la mise en page et les actions UI.
 	private void construireInterface() {
-		JPanel creation = new JPanel(new GridLayout(3, 2, 5, 5));
+		JPanel creation = new JPanel(new GridLayout(3, 2, 5, 5)); 
 		creation.setBorder(BorderFactory.createTitledBorder("creer un bavard"));
 		creation.add(new JLabel("nom"));
 		creation.add(champNom);

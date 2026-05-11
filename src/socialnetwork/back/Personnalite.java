@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.back;
 
 /**
  * Regle simple: applique une variation fixe de bienveillance.

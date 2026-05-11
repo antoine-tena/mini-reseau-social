@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.back;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -29,6 +29,9 @@ public class PersonnaliteForte extends Personnalite {
      * Applique la variation multipliee par un facteur aleatoire.
      */
     @Override
+    /**
+     * Applique la variation multipliee par un facteur aleatoire.
+     */
     public float appliquer(float bienveillance) {
         randomizeFacteur();
         float scaled = getVariationBienveillance() * facteur;

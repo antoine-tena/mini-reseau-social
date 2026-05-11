@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.front;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
@@ -15,6 +15,10 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+
+import socialnetwork.back.Bavard;
+import socialnetwork.back.BavardObserver;
+import socialnetwork.back.MessageEvent;
 
 /**
  * Fenetre d'un bavard: affiche messages/amis et emet des actions.
@@ -110,7 +114,6 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 			return;
 		}
 		bavard.envoyerMessage(contenu);
-		champMessage.setText("");
 	}
 
 	// Relance un message selectionne.
