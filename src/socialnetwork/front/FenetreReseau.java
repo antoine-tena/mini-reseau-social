@@ -1,4 +1,4 @@
-package socialnetwork;
+package socialnetwork.front;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
@@ -19,6 +19,14 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import socialnetwork.back.Bavard;
+import socialnetwork.back.Personnalite;
+import socialnetwork.back.PersonnaliteForte;
+import socialnetwork.back.Reseau;
+
+/**
+ * Fenetre principale: creation des bavards et actions sur le reseau.
+ */
 public class FenetreReseau extends JFrame {
 	private final Reseau reseau;
 	private final Map<Bavard, FenetreBavard> fenetres;
@@ -32,6 +40,9 @@ public class FenetreReseau extends JFrame {
 	private final JTextField champMessage;
 	private final JTextArea zoneResume;
 
+	/**
+	 * Initialise le reseau et construit l'interface.
+	 */
 	public FenetreReseau() {
 		this.reseau = new Reseau();
 		this.fenetres = new LinkedHashMap<>();
@@ -55,8 +66,9 @@ public class FenetreReseau extends JFrame {
 		actualiserResume();
 	}
 
+	// Construit la mise en page et les actions UI.
 	private void construireInterface() {
-		JPanel creation = new JPanel(new GridLayout(3, 2, 5, 5));
+		JPanel creation = new JPanel(new GridLayout(3, 2, 5, 5)); 
 		creation.setBorder(BorderFactory.createTitledBorder("creer un bavard"));
 		creation.add(new JLabel("nom"));
 		creation.add(champNom);
@@ -118,6 +130,7 @@ public class FenetreReseau extends JFrame {
 		boutonToutOuvrir.addActionListener(event -> ouvrirToutesLesFenetres());
 	}
 
+	// Liste des personnalites disponibles.
 	private Personnalite[] creerChoixPersonnalites() {
 		return new Personnalite[] {
 			Personnalite.POSITIF,
@@ -129,6 +142,7 @@ public class FenetreReseau extends JFrame {
 		};
 	}
 
+	// Ajoute un nouveau bavard au reseau.
 	private void ajouterBavard() {
 		String nom = champNom.getText().trim();
 		if (nom.isEmpty()) {
@@ -151,6 +165,7 @@ public class FenetreReseau extends JFrame {
 		actualiserResume();
 	}
 
+	// Lie deux bavards selectionnes.
 	private void connecterBavards() {
 		Bavard premier = (Bavard) choixLien1.getSelectedItem();
 		Bavard deuxieme = (Bavard) choixLien2.getSelectedItem();
@@ -166,6 +181,7 @@ public class FenetreReseau extends JFrame {
 		actualiserResume();
 	}
 
+	// Envoi un message depuis l'emetteur selectionne.
 	private void lancerPropagation() {
 		Bavard emetteur = (Bavard) choixEmission.getSelectedItem();
 		String message = champMessage.getText().trim();
@@ -176,6 +192,7 @@ public class FenetreReseau extends JFrame {
 		champMessage.setText("");
 	}
 
+	// Ouvre la fenetre du bavard selectionne.
 	private void ouvrirSelection() {
 		Bavard bavard = listeBavards.getSelectedValue();
 		if (bavard == null) {
@@ -184,12 +201,14 @@ public class FenetreReseau extends JFrame {
 		ouvrirFenetre(bavard);
 	}
 
+	// Ouvre toutes les fenetres de bavards.
 	private void ouvrirToutesLesFenetres() {
 		for (Bavard bavard : reseau.getBavards()) {
 			ouvrirFenetre(bavard);
 		}
 	}
 
+	// Recupere ou cree la fenetre associee.
 	private void ouvrirFenetre(Bavard bavard) {
 		FenetreBavard fenetre = fenetres.get(bavard);
 		if (fenetre == null) {
@@ -199,6 +218,7 @@ public class FenetreReseau extends JFrame {
 		fenetre.setVisible(true);
 	}
 
+	// Recharge les listes deroulantes.
 	private void actualiserChoix() {
 		choixLien1.removeAllItems();
 		choixLien2.removeAllItems();
@@ -210,6 +230,7 @@ public class FenetreReseau extends JFrame {
 		}
 	}
 
+	// Met a jour le texte de resume du reseau.
 	private void actualiserResume() {
 		StringBuilder builder = new StringBuilder();
 		for (Bavard bavard : reseau.getBavards()) {
@@ -233,6 +254,7 @@ public class FenetreReseau extends JFrame {
 		zoneResume.setText(builder.toString());
 	}
 
+	// Recherche un bavard par son nom.
 	private Bavard chercherParNom(String nom) {
 		for (Bavard bavard : reseau.getBavards()) {
 			if (bavard.getNom().equalsIgnoreCase(nom)) {
@@ -242,6 +264,7 @@ public class FenetreReseau extends JFrame {
 		return null;
 	}
 
+	// Cree un petit reseau pre-rempli.
 	private void creerExemple() {
 		if (!reseau.getBavards().isEmpty()) {
 			JOptionPane.showMessageDialog(this, "le reseau n'est plus vide");
@@ -268,6 +291,7 @@ public class FenetreReseau extends JFrame {
 		ouvrirToutesLesFenetres();
 	}
 
+	// Ajoute un bavard d'exemple au reseau et a l'UI.
 	private void ajouterExemple(Bavard bavard) {
 		reseau.ajouterBavard(bavard);
 		modeleBavards.addElement(bavard);

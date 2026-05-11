@@ -1,6 +1,10 @@
-package socialnetwork;
+package socialnetwork.back;
 
+/**
+ * Lancement de tests console pour verifier la propagation.
+ */
 public class JeuDeTest {
+	// Enchaine plusieurs scenarios simples.
 	public static void main(String[] args) {
 		testSimple();
 		testAvecBoucle();
@@ -9,6 +13,7 @@ public class JeuDeTest {
 	}
 
 	// debut simple avec 2 bavards
+	// Cas minimal avec deux bavards.
 	private static void testSimple() {
 		System.out.println("test 1 - 2 bavards");
 
@@ -26,6 +31,7 @@ public class JeuDeTest {
 	}
 
 	// ici il y a une boucle
+	// Triangle: verifie l'absence de boucle infinie.
 	private static void testAvecBoucle() {
 		System.out.println("test 2 - triangle avec boucle");
 
@@ -50,6 +56,7 @@ public class JeuDeTest {
 	}
 
 	// graphe un peu plus grand
+	// Graphe plus large pour observer la diffusion.
 	private static void testReseauPlusGrand() {
 		System.out.println("test 3 - propagation dans un graphe");
 
@@ -79,6 +86,7 @@ public class JeuDeTest {
 	}
 
 	// on verifie la borne max
+	// Verifie la borne de bienveillance.
 	private static void testBorneBienveillance() {
 		System.out.println("test 4 - borne de bienveillance");
 
