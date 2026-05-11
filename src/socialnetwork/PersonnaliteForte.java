@@ -2,6 +2,9 @@ package socialnetwork;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * Variante avec un facteur aleatoire pour amplifier la variation.
+ */
 public class PersonnaliteForte extends Personnalite {
     public static final PersonnaliteForte POSITIF_FORTE = new PersonnaliteForte("POSITIF_FORTE", 1f);
     public static final PersonnaliteForte NEGATIF_FORTE = new PersonnaliteForte("NEGATIF_FORTE", -1f);
@@ -9,15 +12,22 @@ public class PersonnaliteForte extends Personnalite {
 
     private float facteur;
     
+    /**
+     * Cree une personnalite forte avec un facteur aleatoire initial.
+     */
     public PersonnaliteForte(String nom, float variationBienveillance) {
         super(nom, variationBienveillance);
         randomizeFacteur();
     }
 
+    // Tire un nouveau facteur pour la prochaine application.
     public void randomizeFacteur() {
         this.facteur = (float) ThreadLocalRandom.current().nextDouble(1.5f, 2.0f);
     }
 
+    /**
+     * Applique la variation multipliee par un facteur aleatoire.
+     */
     @Override
     public float appliquer(float bienveillance) {
         randomizeFacteur();

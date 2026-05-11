@@ -16,6 +16,9 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 
+/**
+ * Fenetre d'un bavard: affiche messages/amis et emet des actions.
+ */
 public class FenetreBavard extends JFrame implements BavardObserver {
 	private final Bavard bavard;
 	private final DefaultListModel<MessageEvent> modeleMessages;
@@ -24,6 +27,9 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 	private final JList<String> listeAmis;
 	private final JTextField champMessage;
 
+	/**
+	 * Cree la fenetre et s'inscrit comme observer du bavard.
+	 */
 	public FenetreBavard(Bavard bavard) {
 		this.bavard = bavard;
 		this.modeleMessages = new DefaultListModel<>();
@@ -42,6 +48,7 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 		bavard.ajouterObservateur(this);
 	}
 
+	// Construit les composants Swing.
 	private void construireInterface() {
 		JPanel infos = new JPanel(new GridLayout(2, 1));
 		infos.setBorder(BorderFactory.createTitledBorder("infos"));
@@ -80,6 +87,7 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 		boutonSuivre.addActionListener(event -> faireSuivreMessage());
 	}
 
+	// Charge l'etat initial (messages + amis).
 	private void chargerDonnees() {
 		modeleMessages.clear();
 		for (MessageEvent message : bavard.getMessagesRecus()) {
@@ -95,6 +103,7 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 		}
 	}
 
+	// Envoi direct depuis le champ texte.
 	private void envoyerMessage() {
 		String contenu = champMessage.getText().trim();
 		if (contenu.isEmpty()) {
@@ -104,6 +113,7 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 		champMessage.setText("");
 	}
 
+	// Relance un message selectionne.
 	private void faireSuivreMessage() {
 		MessageEvent message = listeMessages.getSelectedValue();
 		if (message == null) {
@@ -113,11 +123,13 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 	}
 
 	@Override
+	// Callback observe: nouveau message.
 	public void messageAjoute(Bavard bavard, MessageEvent event) {
 		SwingUtilities.invokeLater(() -> modeleMessages.addElement(event));
 	}
 
 	@Override
+	// Callback observe: liste d'amis modifiee.
 	public void amisMisAJour(Bavard bavard) {
 		SwingUtilities.invokeLater(this::actualiserAmis);
 	}

@@ -3,6 +3,9 @@ package socialnetwork;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Stocke les bavards et leurs connexions.
+ */
 public class Reseau {
 	// liste simple de tous les bavards
 	private final List<Bavard> bavards;
@@ -21,6 +24,9 @@ public class Reseau {
 		bavards.add(bavard);
 	}
 
+	/**
+	 * Cree un lien bidirectionnel entre deux bavards.
+	 */
 	public void connecter(Bavard premierBavard, Bavard deuxiemeBavard) {
 		if (premierBavard == null) {
 			return;
