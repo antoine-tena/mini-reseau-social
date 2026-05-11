@@ -20,9 +20,12 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import socialnetwork.back.Bavard;
+import socialnetwork.back.MessageEvent;
 import socialnetwork.back.Personnalite;
+import socialnetwork.back.PersonnaliteAdaptative;
 import socialnetwork.back.PersonnaliteForte;
 import socialnetwork.back.Reseau;
+import socialnetwork.back.StatistiquesReseau;
 
 /**
  * Fenetre principale: creation des bavards et actions sur le reseau.
@@ -38,7 +41,12 @@ public class FenetreReseau extends JFrame {
 	private final JComboBox<Bavard> choixLien2;
 	private final JComboBox<Bavard> choixEmission;
 	private final JTextField champMessage;
+	// phase 4 : profondeur de propagation (vide = infini)
+	private final JTextField champProfondeur;
 	private final JTextArea zoneResume;
+	// phase 4 : panneau statistiques
+	private final JTextArea zoneStats;
+	private StatistiquesReseau stats;
 
 	/**
 	 * Initialise le reseau et construit l'interface.
@@ -54,10 +62,14 @@ public class FenetreReseau extends JFrame {
 		this.choixLien2 = new JComboBox<>();
 		this.choixEmission = new JComboBox<>();
 		this.champMessage = new JTextField();
+		this.champProfondeur = new JTextField();
 		this.zoneResume = new JTextArea();
+		this.zoneStats = new JTextArea();
+		this.zoneStats.setEditable(false);
+		this.stats = null;
 
-		setTitle("reseau social emotionnel");
-		setSize(860, 540);
+		setTitle("reseau social emotionnel - phase 4");
+		setSize(1000, 620);
 		setLocationByPlatform(true);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -90,12 +102,14 @@ public class FenetreReseau extends JFrame {
 		liens.add(boutonConnecter);
 		liens.add(boutonOuvrir);
 
-		JPanel propagation = new JPanel(new GridLayout(3, 2, 5, 5));
+		JPanel propagation = new JPanel(new GridLayout(4, 2, 5, 5));
 		propagation.setBorder(BorderFactory.createTitledBorder("lancer une propagation"));
 		propagation.add(new JLabel("emetteur"));
 		propagation.add(choixEmission);
 		propagation.add(new JLabel("message"));
 		propagation.add(champMessage);
+		propagation.add(new JLabel("profondeur max (-1 = infini)"));
+		propagation.add(champProfondeur);
 		JButton boutonPropager = new JButton("propager");
 		JButton boutonToutOuvrir = new JButton("ouvrir tout");
 		propagation.add(boutonPropager);
@@ -113,14 +127,27 @@ public class FenetreReseau extends JFrame {
 		JScrollPane scrollResume = new JScrollPane(zoneResume);
 		scrollResume.setBorder(BorderFactory.createTitledBorder("resume du reseau"));
 
+		// phase 4 : zone stats a droite
+		zoneStats.setEditable(false);
+		JScrollPane scrollStats = new JScrollPane(zoneStats);
+		scrollStats.setBorder(BorderFactory.createTitledBorder("statistiques"));
+
+		JButton boutonStats = new JButton("actualiser stats");
+		JPanel panneauStats = new JPanel(new BorderLayout(5, 5));
+		panneauStats.add(boutonStats, BorderLayout.NORTH);
+		panneauStats.add(scrollStats, BorderLayout.CENTER);
+
 		JSplitPane droite = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollBavards, scrollResume);
-		droite.setResizeWeight(0.45);
+		droite.setResizeWeight(0.35);
 
 		JSplitPane principal = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, gauche, droite);
-		principal.setResizeWeight(0.45);
+		principal.setResizeWeight(0.40);
+
+		JSplitPane tout = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, principal, panneauStats);
+		tout.setResizeWeight(0.70);
 
 		setLayout(new BorderLayout(5, 5));
-		add(principal, BorderLayout.CENTER);
+		add(tout, BorderLayout.CENTER);
 
 		boutonAjouter.addActionListener(event -> ajouterBavard());
 		boutonExemple.addActionListener(event -> creerExemple());
@@ -128,9 +155,10 @@ public class FenetreReseau extends JFrame {
 		boutonOuvrir.addActionListener(event -> ouvrirSelection());
 		boutonPropager.addActionListener(event -> lancerPropagation());
 		boutonToutOuvrir.addActionListener(event -> ouvrirToutesLesFenetres());
+		boutonStats.addActionListener(event -> actualiserStats());
 	}
 
-	// Liste des personnalites disponibles.
+	// Liste des personnalites disponibles - phase 4 : inclut adaptative.
 	private Personnalite[] creerChoixPersonnalites() {
 		return new Personnalite[] {
 			Personnalite.POSITIF,
@@ -138,7 +166,9 @@ public class FenetreReseau extends JFrame {
 			Personnalite.NEUTRE,
 			PersonnaliteForte.POSITIF_FORTE,
 			PersonnaliteForte.NEGATIF_FORTE,
-			PersonnaliteForte.NEUTRE_FORTE
+			PersonnaliteForte.NEUTRE_FORTE,
+			new PersonnaliteAdaptative("ADAPTATIF+", 0.5f, 0.1f, 3f),
+			new PersonnaliteAdaptative("ADAPTATIF-", -0.5f, 0.1f, 3f)
 		};
 	}
 
@@ -159,6 +189,10 @@ public class FenetreReseau extends JFrame {
 		reseau.ajouterBavard(bavard);
 		modeleBavards.addElement(bavard);
 		fenetres.put(bavard, new FenetreBavard(bavard));
+		// phase 4 : inscrire dans les stats si elles existent
+		if (stats != null) {
+			stats.observerBavard(bavard);
+		}
 
 		champNom.setText("");
 		actualiserChoix();
@@ -182,14 +216,38 @@ public class FenetreReseau extends JFrame {
 	}
 
 	// Envoi un message depuis l'emetteur selectionne.
+	// Phase 4 : lit la profondeur et configure l'emetteur avant l'envoi.
 	private void lancerPropagation() {
 		Bavard emetteur = (Bavard) choixEmission.getSelectedItem();
 		String message = champMessage.getText().trim();
 		if (emetteur == null || message.isEmpty()) {
 			return;
 		}
+		// lecture de la profondeur (-1 si vide ou invalide)
+		String profStr = champProfondeur.getText().trim();
+		int profondeur;
+		try {
+			profondeur = profStr.isEmpty() ? MessageEvent.PROFONDEUR_INFINIE : Integer.parseInt(profStr);
+		} catch (NumberFormatException ex) {
+			profondeur = MessageEvent.PROFONDEUR_INFINIE;
+		}
+		emetteur.setProfondeurEmission(profondeur);
+		// initialiser les stats au premier envoi
+		if (stats == null) {
+			stats = new StatistiquesReseau(reseau);
+		}
 		emetteur.envoyerMessage(message);
 		champMessage.setText("");
+		actualiserStats();
+	}
+
+	// Phase 4 : met a jour la zone de statistiques.
+	private void actualiserStats() {
+		if (stats == null) {
+			zoneStats.setText("pas encore de propagation lancee");
+			return;
+		}
+		zoneStats.setText(stats.resume());
 	}
 
 	// Ouvre la fenetre du bavard selectionne.
@@ -264,7 +322,7 @@ public class FenetreReseau extends JFrame {
 		return null;
 	}
 
-	// Cree un petit reseau pre-rempli.
+	// Cree un petit reseau pre-rempli. Phase 4 : ajout de bavards avec persos avancees.
 	private void creerExemple() {
 		if (!reseau.getBavards().isEmpty()) {
 			JOptionPane.showMessageDialog(this, "le reseau n'est plus vide");
@@ -275,16 +333,34 @@ public class FenetreReseau extends JFrame {
 		Bavard yanis = new Bavard("Yanis", Personnalite.NEGATIF);
 		Bavard nora = new Bavard("Nora", Personnalite.NEUTRE);
 		Bavard sami = new Bavard("Sami", PersonnaliteForte.POSITIF_FORTE);
+		// phase 4 : bavard avec personnalite adaptative
+		Bavard cam = new Bavard("Cam", new PersonnaliteAdaptative("ADAPTATIF+", 0.5f, 0.15f, 3f));
+		// phase 4 : bavard avec seuil de tolerance (refuse les messages negatifs)
+		Bavard leo = new Bavard("Leo", Personnalite.NEUTRE);
+		leo.setSeuilTolerance(0f);
+		// phase 4 : bavard avec propagation probabiliste 70%
+		Bavard jade = new Bavard("Jade", Personnalite.POSITIF);
+		jade.setProbabiliteRetransmission(0.7);
 
 		ajouterExemple(lina);
 		ajouterExemple(yanis);
 		ajouterExemple(nora);
 		ajouterExemple(sami);
+		ajouterExemple(cam);
+		ajouterExemple(leo);
+		ajouterExemple(jade);
 
 		reseau.connecter(lina, yanis);
 		reseau.connecter(yanis, nora);
 		reseau.connecter(nora, sami);
 		reseau.connecter(lina, sami);
+		reseau.connecter(sami, cam);
+		reseau.connecter(cam, leo);
+		reseau.connecter(leo, jade);
+		reseau.connecter(jade, lina);
+
+		// phase 4 : initialiser les statistiques sur cet exemple
+		stats = new StatistiquesReseau(reseau);
 
 		actualiserChoix();
 		actualiserResume();

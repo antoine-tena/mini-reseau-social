@@ -40,6 +40,14 @@ public class Personnalite {
 		return resultat;
 	}
 
+	/**
+	 * Phase 4 : version contextuelle qui prend en compte le contenu du message.
+	 * Par defaut, ignore le contenu (comportement identique a appliquer(float)).
+	 */
+	public float appliquer(float bienveillance, String contenu) {
+		return appliquer(bienveillance);
+	}
+
 	@Override
 	public String toString() {
 		return nom;

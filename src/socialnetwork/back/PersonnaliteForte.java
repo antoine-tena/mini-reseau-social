@@ -46,6 +46,12 @@ public class PersonnaliteForte extends Personnalite {
     }
 
     @Override
+    public float appliquer(float bienveillance, String contenu) {
+        // personnalite forte : ignore le contenu, utilise le facteur aleatoire
+        return appliquer(bienveillance);
+    }
+
+    @Override
     public String toString() {
         return super.toString() + "(forte x" + String.format("%.2f", facteur) + ")";
     }

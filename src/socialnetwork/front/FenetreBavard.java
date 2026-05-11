@@ -1,6 +1,7 @@
 package socialnetwork.front;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.GridLayout;
 
 import javax.swing.BorderFactory;
@@ -12,6 +13,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -30,6 +32,8 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 	private final JList<MessageEvent> listeMessages;
 	private final JList<String> listeAmis;
 	private final JTextField champMessage;
+	// phase 4 : affichage du chemin du message selectionne
+	private final JTextArea zoneChemin;
 
 	/**
 	 * Cree la fenetre et s'inscrit comme observer du bavard.
@@ -41,6 +45,9 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 		this.listeMessages = new JList<>(modeleMessages);
 		this.listeAmis = new JList<>(modeleAmis);
 		this.champMessage = new JTextField();
+		this.zoneChemin = new JTextArea(2, 0);
+		this.zoneChemin.setEditable(false);
+		this.zoneChemin.setLineWrap(true);
 
 		setTitle("bavard - " + bavard.getNom());
 		setSize(520, 420);
@@ -60,6 +67,13 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 		infos.add(new JLabel("personnalite : " + bavard.getPersonnalite()));
 
 		listeMessages.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+		// phase 4 : clic sur un message -> affiche le chemin en bas
+		listeMessages.addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting()) {
+				afficherChemin(listeMessages.getSelectedValue());
+			}
+		});
 
 		JScrollPane scrollMessages = new JScrollPane(listeMessages);
 		scrollMessages.setBorder(BorderFactory.createTitledBorder("messages recus"));
@@ -82,10 +96,18 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 		bas.add(champMessage, BorderLayout.CENTER);
 		bas.add(boutons, BorderLayout.SOUTH);
 
+		// phase 4 : zone chemin en bas de la fenetre
+		JScrollPane scrollChemin = new JScrollPane(zoneChemin);
+		scrollChemin.setBorder(BorderFactory.createTitledBorder("chemin du message selectionne"));
+
+		JPanel panneauBas = new JPanel(new BorderLayout(5, 5));
+		panneauBas.add(scrollChemin, BorderLayout.NORTH);
+		panneauBas.add(bas, BorderLayout.SOUTH);
+
 		setLayout(new BorderLayout(5, 5));
 		add(infos, BorderLayout.NORTH);
 		add(split, BorderLayout.CENTER);
-		add(bas, BorderLayout.SOUTH);
+		add(panneauBas, BorderLayout.SOUTH);
 
 		boutonEnvoyer.addActionListener(event -> envoyerMessage());
 		boutonSuivre.addActionListener(event -> faireSuivreMessage());
@@ -123,6 +145,19 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 			return;
 		}
 		bavard.faireSuivreMessage(message);
+	}
+
+	// Phase 4 : met a jour la zone chemin selon la selection.
+	private void afficherChemin(MessageEvent event) {
+		if (event == null) {
+			zoneChemin.setText("");
+			return;
+		}
+		String chemin = String.join(" -> ", event.getChemin());
+		zoneChemin.setText(chemin
+				+ "  |  hop=" + event.getHopActuel()
+				+ "  tx=" + event.getTransmissions()
+				+ "  b=" + String.format("%.1f", event.getBienveillance()));
 	}
 
 	@Override
