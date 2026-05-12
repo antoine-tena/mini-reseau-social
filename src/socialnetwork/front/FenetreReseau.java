@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -16,6 +17,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
@@ -23,6 +25,7 @@ import socialnetwork.back.Bavard;
 import socialnetwork.back.MessageEvent;
 import socialnetwork.back.Personnalite;
 import socialnetwork.back.PersonnaliteAdaptative;
+import socialnetwork.back.PersonnaliteContextuelle;
 import socialnetwork.back.PersonnaliteForte;
 import socialnetwork.back.Reseau;
 import socialnetwork.back.StatistiquesReseau;
@@ -47,6 +50,8 @@ public class FenetreReseau extends JFrame {
 	// phase 4 : panneau statistiques
 	private final JTextArea zoneStats;
 	private StatistiquesReseau stats;
+	// visualisation graphique du reseau
+	private VueReseau vueReseau;
 
 	/**
 	 * Initialise le reseau et construit l'interface.
@@ -127,15 +132,26 @@ public class FenetreReseau extends JFrame {
 		JScrollPane scrollResume = new JScrollPane(zoneResume);
 		scrollResume.setBorder(BorderFactory.createTitledBorder("resume du reseau"));
 
-		// phase 4 : zone stats a droite
+		// visualisation graphique du reseau (bonus)
+		vueReseau = new VueReseau(reseau);
+
+		// onglets droite : reseau graphique + statistiques
 		zoneStats.setEditable(false);
 		JScrollPane scrollStats = new JScrollPane(zoneStats);
 		scrollStats.setBorder(BorderFactory.createTitledBorder("statistiques"));
 
 		JButton boutonStats = new JButton("actualiser stats");
-		JPanel panneauStats = new JPanel(new BorderLayout(5, 5));
-		panneauStats.add(boutonStats, BorderLayout.NORTH);
-		panneauStats.add(scrollStats, BorderLayout.CENTER);
+		JButton boutonResetStats = new JButton("reinitialiser stats");
+		JPanel boutonsStats = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 2));
+		boutonsStats.add(boutonStats);
+		boutonsStats.add(boutonResetStats);
+		JPanel panneauStatsContenu = new JPanel(new BorderLayout(5, 5));
+		panneauStatsContenu.add(boutonsStats, BorderLayout.NORTH);
+		panneauStatsContenu.add(scrollStats, BorderLayout.CENTER);
+
+		JTabbedPane onglets = new JTabbedPane();
+		onglets.addTab("reseau", vueReseau);
+		onglets.addTab("statistiques", panneauStatsContenu);
 
 		JSplitPane droite = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollBavards, scrollResume);
 		droite.setResizeWeight(0.35);
@@ -143,7 +159,7 @@ public class FenetreReseau extends JFrame {
 		JSplitPane principal = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, gauche, droite);
 		principal.setResizeWeight(0.40);
 
-		JSplitPane tout = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, principal, panneauStats);
+		JSplitPane tout = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, principal, onglets);
 		tout.setResizeWeight(0.70);
 
 		setLayout(new BorderLayout(5, 5));
@@ -156,9 +172,10 @@ public class FenetreReseau extends JFrame {
 		boutonPropager.addActionListener(event -> lancerPropagation());
 		boutonToutOuvrir.addActionListener(event -> ouvrirToutesLesFenetres());
 		boutonStats.addActionListener(event -> actualiserStats());
+		boutonResetStats.addActionListener(event -> reinitialiserStats());
 	}
 
-	// Liste des personnalites disponibles - phase 4 : inclut adaptative.
+	// Liste des personnalites disponibles.
 	private Personnalite[] creerChoixPersonnalites() {
 		return new Personnalite[] {
 			Personnalite.POSITIF,
@@ -168,7 +185,9 @@ public class FenetreReseau extends JFrame {
 			PersonnaliteForte.NEGATIF_FORTE,
 			PersonnaliteForte.NEUTRE_FORTE,
 			new PersonnaliteAdaptative("ADAPTATIF+", 0.5f, 0.1f, 3f),
-			new PersonnaliteAdaptative("ADAPTATIF-", -0.5f, 0.1f, 3f)
+			new PersonnaliteAdaptative("ADAPTATIF-", -0.5f, 0.1f, 3f),
+			PersonnaliteContextuelle.SENSIBLE_POSITIF,
+			PersonnaliteContextuelle.SENSIBLE_NEGATIF
 		};
 	}
 
@@ -193,6 +212,7 @@ public class FenetreReseau extends JFrame {
 		if (stats != null) {
 			stats.observerBavard(bavard);
 		}
+		vueReseau.observerBavard(bavard);
 
 		champNom.setText("");
 		actualiserChoix();
@@ -212,7 +232,9 @@ public class FenetreReseau extends JFrame {
 		}
 
 		reseau.connecter(premier, deuxieme);
+		vueReseau.repaint();
 		actualiserResume();
+		actualiserStats();
 	}
 
 	// Envoi un message depuis l'emetteur selectionne.
@@ -372,5 +394,14 @@ public class FenetreReseau extends JFrame {
 		reseau.ajouterBavard(bavard);
 		modeleBavards.addElement(bavard);
 		fenetres.put(bavard, new FenetreBavard(bavard));
+		vueReseau.observerBavard(bavard);
+	}
+
+	// Reinitialise les statistiques.
+	private void reinitialiserStats() {
+		if (stats != null) {
+			stats.reset();
+			actualiserStats();
+		}
 	}
 }

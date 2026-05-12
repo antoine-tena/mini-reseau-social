@@ -2,9 +2,12 @@ package socialnetwork.front;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -34,6 +37,10 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 	private final JTextField champMessage;
 	// phase 4 : affichage du chemin du message selectionne
 	private final JTextArea zoneChemin;
+	// configuration bavard en direct
+	private final JTextField champSeuil;
+	private final JTextField champProba;
+	private final JLabel labelCompteur;
 
 	/**
 	 * Cree la fenetre et s'inscrit comme observer du bavard.
@@ -48,9 +55,12 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 		this.zoneChemin = new JTextArea(2, 0);
 		this.zoneChemin.setEditable(false);
 		this.zoneChemin.setLineWrap(true);
+		this.champSeuil = new JTextField(String.valueOf((int)bavard.getSeuilTolerance()), 4);
+		this.champProba = new JTextField(String.format("%.0f", bavard.getProbabiliteRetransmission() * 100), 4);
+		this.labelCompteur = new JLabel("tx: 0");
 
 		setTitle("bavard - " + bavard.getNom());
-		setSize(520, 420);
+		setSize(580, 540);
 		setLocationByPlatform(true);
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
@@ -74,6 +84,8 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 				afficherChemin(listeMessages.getSelectedValue());
 			}
 		});
+		// couleurs selon bienveillance du message
+		listeMessages.setCellRenderer(new MessageRenderer());
 
 		JScrollPane scrollMessages = new JScrollPane(listeMessages);
 		scrollMessages.setBorder(BorderFactory.createTitledBorder("messages recus"));
@@ -100,8 +112,21 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 		JScrollPane scrollChemin = new JScrollPane(zoneChemin);
 		scrollChemin.setBorder(BorderFactory.createTitledBorder("chemin du message selectionne"));
 
+		// configuration bavard (seuil / probabilite) en direct
+		JPanel config = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
+		config.setBorder(BorderFactory.createTitledBorder("configuration"));
+		config.add(new JLabel("seuil [-10..10]:"));
+		config.add(champSeuil);
+		config.add(new JLabel("proba %:"));
+		config.add(champProba);
+		config.add(labelCompteur);
+		JButton boutonConfig = new JButton("appliquer");
+		config.add(boutonConfig);
+		boutonConfig.addActionListener(e -> appliquerConfig());
+
 		JPanel panneauBas = new JPanel(new BorderLayout(5, 5));
 		panneauBas.add(scrollChemin, BorderLayout.NORTH);
+		panneauBas.add(config, BorderLayout.CENTER);
 		panneauBas.add(bas, BorderLayout.SOUTH);
 
 		setLayout(new BorderLayout(5, 5));
@@ -163,12 +188,54 @@ public class FenetreBavard extends JFrame implements BavardObserver {
 	@Override
 	// Callback observe: nouveau message.
 	public void messageAjoute(Bavard bavard, MessageEvent event) {
-		SwingUtilities.invokeLater(() -> modeleMessages.addElement(event));
+		SwingUtilities.invokeLater(() -> {
+			modeleMessages.addElement(event);
+			actualiserCompteur();
+		});
 	}
 
 	@Override
 	// Callback observe: liste d'amis modifiee.
 	public void amisMisAJour(Bavard bavard) {
 		SwingUtilities.invokeLater(this::actualiserAmis);
+	}
+
+	// Lit seuil et proba depuis les champs et les applique au bavard.
+	private void appliquerConfig() {
+		try {
+			float seuil = Float.parseFloat(champSeuil.getText().trim());
+			bavard.setSeuilTolerance(seuil);
+		} catch (NumberFormatException ex) {
+			// saisie invalide, on ignore
+		}
+		try {
+			double proba = Double.parseDouble(champProba.getText().trim()) / 100.0;
+			bavard.setProbabiliteRetransmission(proba);
+		} catch (NumberFormatException ex) {
+			// saisie invalide, on ignore
+		}
+	}
+
+	// Met a jour le compteur de transmissions dans le label.
+	private void actualiserCompteur() {
+		labelCompteur.setText("tx: " + bavard.getCompteurTransmissions());
+	}
+
+	// Renderer qui colorie les messages selon la bienveillance.
+	private static final class MessageRenderer extends DefaultListCellRenderer {
+		@Override
+		public Component getListCellRendererComponent(JList<?> list, Object value,
+				int index, boolean isSelected, boolean cellHasFocus) {
+			super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+			if (value instanceof MessageEvent && !isSelected) {
+				float b = ((MessageEvent) value).getBienveillance();
+				if (b >= 5f)       setBackground(new Color(100, 210, 100));
+				else if (b >= 1f)  setBackground(new Color(200, 240, 200));
+				else if (b >= -1f) setBackground(Color.WHITE);
+				else if (b >= -5f) setBackground(new Color(255, 230, 150));
+				else               setBackground(new Color(255, 180, 180));
+			}
+			return this;
+		}
 	}
 }

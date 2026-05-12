@@ -15,6 +15,14 @@ import java.util.Set;
  */
 public class PersonnaliteContextuelle extends Personnalite {
 
+	/** Amplifie les messages positifs (joie, amour, merci...). */
+	public static final PersonnaliteContextuelle SENSIBLE_POSITIF = new PersonnaliteContextuelle(
+		"SENSIBLE+", 0.5f, Set.of("amour", "joie", "merci", "bravo", "super", "genial", "bien"), 3f);
+
+	/** Amplifie les messages negatifs (haine, colere, triste...). */
+	public static final PersonnaliteContextuelle SENSIBLE_NEGATIF = new PersonnaliteContextuelle(
+		"SENSIBLE-", -0.5f, Set.of("haine", "colere", "triste", "nul", "mauvais", "horrible", "non"), 3f);
+
 	// mots cles qui declenchent le mode contextuel (insensible a la casse)
 	private final Set<String> motsCles;
 	// facteur applique quand un mot cle est detecte
