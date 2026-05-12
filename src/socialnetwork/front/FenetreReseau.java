@@ -20,8 +20,12 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
+import socialnetwork.back.AlgorithmeInfluence;
 import socialnetwork.back.Bavard;
+import socialnetwork.back.GenerateurTopologie;
+import socialnetwork.back.JournalReseau;
 import socialnetwork.back.MessageEvent;
 import socialnetwork.back.Personnalite;
 import socialnetwork.back.PersonnaliteAdaptative;
@@ -52,6 +56,15 @@ public class FenetreReseau extends JFrame {
 	private StatistiquesReseau stats;
 	// visualisation graphique du reseau
 	private VueReseau vueReseau;
+	// journal chronologique de tous les messages
+	private final JournalReseau journal;
+	// panneau de statistiques graphiques
+	private final VueStatistiquesGraphique vueStatsGraph;
+	// zone texte pour l'analyse d'influence
+	private final JTextArea zoneInfluence;
+	// generateur de topologies
+	private final JComboBox<GenerateurTopologie.Topologie> choixTopologie;
+	private final JTextField champNbNoeuds;
 
 	/**
 	 * Initialise le reseau et construit l'interface.
@@ -72,9 +85,16 @@ public class FenetreReseau extends JFrame {
 		this.zoneStats = new JTextArea();
 		this.zoneStats.setEditable(false);
 		this.stats = null;
+		this.journal = new JournalReseau(reseau);
+		this.vueStatsGraph = new VueStatistiquesGraphique();
+		this.zoneInfluence = new JTextArea();
+		this.zoneInfluence.setEditable(false);
+		this.zoneInfluence.setFont(new java.awt.Font(java.awt.Font.MONOSPACED, java.awt.Font.PLAIN, 12));
+		this.choixTopologie = new JComboBox<>(GenerateurTopologie.Topologie.values());
+		this.champNbNoeuds = new JTextField("8", 4);
 
-		setTitle("reseau social emotionnel - phase 4");
-		setSize(1000, 620);
+		setTitle("reseau social emotionnel");
+		setSize(1150, 680);
 		setLocationByPlatform(true);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -107,7 +127,7 @@ public class FenetreReseau extends JFrame {
 		liens.add(boutonConnecter);
 		liens.add(boutonOuvrir);
 
-		JPanel propagation = new JPanel(new GridLayout(4, 2, 5, 5));
+		JPanel propagation = new JPanel(new GridLayout(5, 2, 5, 5));
 		propagation.setBorder(BorderFactory.createTitledBorder("lancer une propagation"));
 		propagation.add(new JLabel("emetteur"));
 		propagation.add(choixEmission);
@@ -117,13 +137,28 @@ public class FenetreReseau extends JFrame {
 		propagation.add(champProfondeur);
 		JButton boutonPropager = new JButton("propager");
 		JButton boutonToutOuvrir = new JButton("ouvrir tout");
+		JButton boutonSimuler = new JButton("simuler...");
 		propagation.add(boutonPropager);
 		propagation.add(boutonToutOuvrir);
+		propagation.add(boutonSimuler);
+		propagation.add(new JLabel(""));
 
-		JPanel gauche = new JPanel(new GridLayout(3, 1, 5, 5));
+		// panneau generateur de topologie
+		JPanel topologie = new JPanel(new GridLayout(3, 2, 5, 5));
+		topologie.setBorder(BorderFactory.createTitledBorder("topologie"));
+		topologie.add(new JLabel("type"));
+		topologie.add(choixTopologie);
+		topologie.add(new JLabel("nb noeuds"));
+		topologie.add(champNbNoeuds);
+		JButton boutonGenerer = new JButton("generer reseau");
+		topologie.add(boutonGenerer);
+		topologie.add(new JLabel(""));
+
+		JPanel gauche = new JPanel(new GridLayout(4, 1, 5, 5));
 		gauche.add(creation);
 		gauche.add(liens);
 		gauche.add(propagation);
+		gauche.add(topologie);
 
 		JScrollPane scrollBavards = new JScrollPane(listeBavards);
 		scrollBavards.setBorder(BorderFactory.createTitledBorder("bavards du reseau"));
@@ -149,9 +184,20 @@ public class FenetreReseau extends JFrame {
 		panneauStatsContenu.add(boutonsStats, BorderLayout.NORTH);
 		panneauStatsContenu.add(scrollStats, BorderLayout.CENTER);
 
+		// onglet influence
+		JScrollPane scrollInfluence = new JScrollPane(zoneInfluence);
+		scrollInfluence.setBorder(BorderFactory.createTitledBorder("rapport"));
+		JButton boutonInfluence = new JButton("calculer influence");
+		JPanel panneauInfluence = new JPanel(new BorderLayout(5, 5));
+		panneauInfluence.add(boutonInfluence, BorderLayout.NORTH);
+		panneauInfluence.add(scrollInfluence, BorderLayout.CENTER);
+
 		JTabbedPane onglets = new JTabbedPane();
 		onglets.addTab("reseau", vueReseau);
 		onglets.addTab("statistiques", panneauStatsContenu);
+		onglets.addTab("stats graph", vueStatsGraph);
+		onglets.addTab("journal", new VueJournal(journal));
+		onglets.addTab("influence", panneauInfluence);
 
 		JSplitPane droite = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollBavards, scrollResume);
 		droite.setResizeWeight(0.35);
@@ -173,6 +219,9 @@ public class FenetreReseau extends JFrame {
 		boutonToutOuvrir.addActionListener(event -> ouvrirToutesLesFenetres());
 		boutonStats.addActionListener(event -> actualiserStats());
 		boutonResetStats.addActionListener(event -> reinitialiserStats());
+		boutonSimuler.addActionListener(event -> ouvrirSimulation());
+		boutonGenerer.addActionListener(event -> genererTopologie());
+		boutonInfluence.addActionListener(event -> calculerInfluence());
 	}
 
 	// Liste des personnalites disponibles.
@@ -213,6 +262,7 @@ public class FenetreReseau extends JFrame {
 			stats.observerBavard(bavard);
 		}
 		vueReseau.observerBavard(bavard);
+		journal.observerBavard(bavard);
 
 		champNom.setText("");
 		actualiserChoix();
@@ -270,6 +320,7 @@ public class FenetreReseau extends JFrame {
 			return;
 		}
 		zoneStats.setText(stats.resume());
+		vueStatsGraph.mettreAJour(stats, reseau);
 	}
 
 	// Ouvre la fenetre du bavard selectionne.
@@ -395,6 +446,7 @@ public class FenetreReseau extends JFrame {
 		modeleBavards.addElement(bavard);
 		fenetres.put(bavard, new FenetreBavard(bavard));
 		vueReseau.observerBavard(bavard);
+		journal.observerBavard(bavard);
 	}
 
 	// Reinitialise les statistiques.
@@ -403,5 +455,62 @@ public class FenetreReseau extends JFrame {
 			stats.reset();
 			actualiserStats();
 		}
+	}
+
+	// Ouvre la fenetre de simulation automatique.
+	private void ouvrirSimulation() {
+		if (reseau.getBavards().isEmpty()) {
+			JOptionPane.showMessageDialog(this, "le reseau est vide");
+			return;
+		}
+		new FenetreSimulation(reseau).setVisible(true);
+	}
+
+	// Genere un reseau selon la topologie selectionnee.
+	private void genererTopologie() {
+		if (!reseau.getBavards().isEmpty()) {
+			JOptionPane.showMessageDialog(this, "le reseau n'est pas vide");
+			return;
+		}
+		GenerateurTopologie.Topologie topo =
+				(GenerateurTopologie.Topologie) choixTopologie.getSelectedItem();
+		int n;
+		try {
+			n = Integer.parseInt(champNbNoeuds.getText().trim());
+			if (n < 2 || n > 60) throw new NumberFormatException();
+		} catch (NumberFormatException ex) {
+			JOptionPane.showMessageDialog(this, "nombre de noeuds invalide (2..60)");
+			return;
+		}
+		Personnalite[] persos = {
+			Personnalite.POSITIF, Personnalite.NEGATIF, Personnalite.NEUTRE,
+			PersonnaliteForte.POSITIF_FORTE, PersonnaliteForte.NEGATIF_FORTE
+		};
+		GenerateurTopologie.generer(reseau, topo, n, persos);
+		stats = new StatistiquesReseau(reseau);
+		for (Bavard b : reseau.getBavards()) {
+			journal.observerBavard(b);
+			vueReseau.observerBavard(b);
+			modeleBavards.addElement(b);
+			fenetres.put(b, new FenetreBavard(b));
+		}
+		actualiserChoix();
+		actualiserResume();
+		JOptionPane.showMessageDialog(this,
+			"Reseau " + topo + " cree !\n"
+			+ GenerateurTopologie.description(reseau));
+	}
+
+	// Lance le calcul d'influence dans un thread separe (peut etre lent).
+	private void calculerInfluence() {
+		if (reseau.getBavards().isEmpty()) {
+			zoneInfluence.setText("reseau vide");
+			return;
+		}
+		zoneInfluence.setText("calcul en cours...");
+		new Thread(() -> {
+			String rapport = AlgorithmeInfluence.rapport(reseau);
+			SwingUtilities.invokeLater(() -> zoneInfluence.setText(rapport));
+		}, "influence-thread").start();
 	}
 }
