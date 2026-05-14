@@ -1,4 +1,4 @@
-package socialnetwork.front;
+package socialnetwork.front.fenetre;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -23,10 +23,11 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 
-import socialnetwork.back.Bavard;
-import socialnetwork.back.JournalReseau;
-import socialnetwork.back.Reseau;
-import socialnetwork.back.StatistiquesReseau;
+import socialnetwork.back.model.Bavard;
+import socialnetwork.back.model.Reseau;
+import socialnetwork.back.stats.EntreeJournal;
+import socialnetwork.back.stats.JournalReseau;
+import socialnetwork.back.stats.StatistiquesReseau;
 
 /**
  * Fenetre de simulation automatique de propagations en mode batch.
@@ -46,7 +47,7 @@ import socialnetwork.back.StatistiquesReseau;
  */
 public class FenetreSimulation extends javax.swing.JFrame {
 
-	// ─── Messages predefinies pour la simulation ──────────────────────────────
+	// ─── Messages predefinies ─────────────────────────────────────────────────
 
 	private static final String[] MESSAGES_POSITIFS = {
 		"super nouvelle pour tout le monde",
@@ -54,7 +55,7 @@ public class FenetreSimulation extends javax.swing.JFrame {
 		"belle journee pleine de soleil",
 		"merci a tous pour votre soutien",
 		"victoire de notre equipe",
-		"je suis tres content content",
+		"je suis tres content",
 		"magnifique coucher de soleil",
 		"bonne nouvelle pour la sante"
 	};
@@ -91,31 +92,28 @@ public class FenetreSimulation extends javax.swing.JFrame {
 
 	// ─── Champs ───────────────────────────────────────────────────────────────
 
-	private final Reseau              reseau;
-	private final StatistiquesReseau  statsLocales;
-	private final JournalReseau       journalLocal;
-	private final Random              rng = new Random();
+	private final Reseau             reseau;
+	private final StatistiquesReseau statsLocales;
+	private final JournalReseau      journalLocal;
+	private final Random             rng = new Random();
 
-	// controls
-	private final JComboBox<Bavard>   choixEmetteur;
-	private final JCheckBox           cbAleatoire;
-	private final JCheckBox           cbMessageAleatoire;
-	private final JCheckBox           cbSentimentAuto;
-	private final JSpinner            spinnerCycles;
-	private final JSpinner            spinnerDelai;
-	private final JTextField          champMessage;
+	private final JComboBox<Bavard>  choixEmetteur;
+	private final JCheckBox          cbAleatoire;
+	private final JCheckBox          cbMessageAleatoire;
+	private final JCheckBox          cbSentimentAuto;
+	private final JSpinner           spinnerCycles;
+	private final JSpinner           spinnerDelai;
+	private final JTextField         champMessage;
 
-	// affichage
-	private final JTextArea           zoneLog;
-	private final JProgressBar        progressBar;
-	private final JLabel              labelCycle;
-	private final JLabel              labelBMoyenne;
-	private final JButton             boutonDemarrer;
-	private final JButton             boutonArreter;
-	private final JButton             boutonReset;
+	private final JTextArea          zoneLog;
+	private final JProgressBar       progressBar;
+	private final JLabel             labelCycle;
+	private final JLabel             labelBMoyenne;
+	private final JButton            boutonDemarrer;
+	private final JButton            boutonArreter;
+	private final JButton            boutonReset;
 
-	// etat simulation
-	private javax.swing.Timer timer;
+	private javax.swing.Timer        timer;
 	private int cyclesCourants;
 	private int cyclesMax;
 
@@ -126,16 +124,15 @@ public class FenetreSimulation extends javax.swing.JFrame {
 		this.statsLocales = new StatistiquesReseau(reseau);
 		this.journalLocal = new JournalReseau(reseau);
 
-		// combo bavards
 		this.choixEmetteur = new JComboBox<>();
 		for (Bavard b : reseau.getBavards()) choixEmetteur.addItem(b);
 
-		this.cbAleatoire         = new JCheckBox("emetteur aleatoire", true);
-		this.cbMessageAleatoire  = new JCheckBox("message aleatoire", true);
-		this.cbSentimentAuto     = new JCheckBox("sentiment aleatoire (mix positif/negatif)", false);
-		this.spinnerCycles       = new JSpinner(new SpinnerNumberModel(20, 1, 2000, 1));
-		this.spinnerDelai        = new JSpinner(new SpinnerNumberModel(400, 50, 10000, 50));
-		this.champMessage        = new JTextField("message de simulation");
+		this.cbAleatoire        = new JCheckBox("emetteur aleatoire", true);
+		this.cbMessageAleatoire = new JCheckBox("message aleatoire", true);
+		this.cbSentimentAuto    = new JCheckBox("sentiment aleatoire (mix positif/negatif)", false);
+		this.spinnerCycles      = new JSpinner(new SpinnerNumberModel(20, 1, 2000, 1));
+		this.spinnerDelai       = new JSpinner(new SpinnerNumberModel(400, 50, 10000, 50));
+		this.champMessage       = new JTextField("message de simulation");
 
 		this.zoneLog       = new JTextArea();
 		this.zoneLog.setEditable(false);
@@ -143,11 +140,11 @@ public class FenetreSimulation extends javax.swing.JFrame {
 		this.progressBar   = new JProgressBar(0, 20);
 		this.progressBar.setStringPainted(true);
 		this.labelCycle    = new JLabel("cycle: 0/0");
-		this.labelBMoyenne = new JLabel("bienveillance moy: —");
+		this.labelBMoyenne = new JLabel("bienveillance moy: \u2014");
 
-		this.boutonDemarrer = new JButton("▶  demarrer");
-		this.boutonArreter  = new JButton("■  arreter");
-		this.boutonReset    = new JButton("↺  reinitialiser");
+		this.boutonDemarrer = new JButton("\u25B6  demarrer");
+		this.boutonArreter  = new JButton("\u25A0  arreter");
+		this.boutonReset    = new JButton("\u21BA  reinitialiser");
 		this.boutonArreter.setEnabled(false);
 
 		setTitle("simulateur de propagation");
@@ -158,7 +155,6 @@ public class FenetreSimulation extends javax.swing.JFrame {
 		construireInterface();
 		connecterActions();
 
-		// mise a jour en temps reel via le journal local
 		journalLocal.ajouterEcouteur(() ->
 				SwingUtilities.invokeLater(this::onNouveauMessage));
 	}
@@ -166,7 +162,6 @@ public class FenetreSimulation extends javax.swing.JFrame {
 	// ─── Interface ────────────────────────────────────────────────────────────
 
 	private void construireInterface() {
-		// ── panneau configuration ──
 		JPanel confEmetteur = new JPanel(new GridLayout(3, 2, 5, 4));
 		confEmetteur.setBorder(BorderFactory.createTitledBorder("emetteur"));
 		confEmetteur.add(new JLabel("bavard"));
@@ -197,7 +192,6 @@ public class FenetreSimulation extends javax.swing.JFrame {
 		confGlobal.add(confMessage);
 		confGlobal.add(confSim);
 
-		// ── barre de progression ──
 		JPanel stats = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 2));
 		stats.add(labelCycle);
 		stats.add(labelBMoyenne);
@@ -207,19 +201,16 @@ public class FenetreSimulation extends javax.swing.JFrame {
 		progression.add(progressBar, BorderLayout.CENTER);
 		progression.add(stats, BorderLayout.SOUTH);
 
-		// ── boutons ──
 		JPanel boutonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 4));
 		boutonsPanel.add(boutonDemarrer);
 		boutonsPanel.add(boutonArreter);
 		boutonsPanel.add(boutonReset);
 
-		// ── zone nord ──
 		JPanel nord = new JPanel(new BorderLayout(5, 5));
 		nord.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
 		nord.add(confGlobal, BorderLayout.CENTER);
 		nord.add(progression, BorderLayout.SOUTH);
 
-		// ── log ──
 		JScrollPane scrollLog = new JScrollPane(zoneLog);
 		scrollLog.setBorder(BorderFactory.createTitledBorder("journal de simulation"));
 
@@ -256,16 +247,13 @@ public class FenetreSimulation extends javax.swing.JFrame {
 
 		statsLocales.reset();
 		journalLocal.effacer();
-		zoneLog.setText("=== simulation demarre — " + cyclesMax + " cycles ===\n\n");
+		zoneLog.setText("=== simulation demarre \u2014 " + cyclesMax + " cycles ===\n\n");
 
 		boutonDemarrer.setEnabled(false);
 		boutonArreter.setEnabled(true);
 
 		timer = new javax.swing.Timer(delai, e -> {
-			if (cyclesCourants >= cyclesMax) {
-				finSimulation();
-				return;
-			}
+			if (cyclesCourants >= cyclesMax) { finSimulation(); return; }
 			executerCycle();
 			cyclesCourants++;
 			progressBar.setValue(cyclesCourants);
@@ -279,16 +267,13 @@ public class FenetreSimulation extends javax.swing.JFrame {
 	private void executerCycle() {
 		Bavard emetteur = choisirEmetteur();
 		if (emetteur == null) return;
-		String msg = choisirMessage();
-		emetteur.envoyerMessage(msg);
+		emetteur.envoyerMessage(choisirMessage());
 	}
 
 	private Bavard choisirEmetteur() {
 		List<Bavard> bavards = reseau.getBavards();
 		if (bavards.isEmpty()) return null;
-		if (cbAleatoire.isSelected()) {
-			return bavards.get(rng.nextInt(bavards.size()));
-		}
+		if (cbAleatoire.isSelected()) return bavards.get(rng.nextInt(bavards.size()));
 		return (Bavard) choixEmetteur.getSelectedItem();
 	}
 
@@ -298,10 +283,8 @@ public class FenetreSimulation extends javax.swing.JFrame {
 			return txt.isEmpty() ? "message" : txt;
 		}
 		if (cbSentimentAuto.isSelected()) {
-			// alterner positif / negatif selon le cycle
-			if (cyclesCourants % 3 == 0) {
+			if (cyclesCourants % 3 == 0)
 				return MESSAGES_NEGATIFS[rng.nextInt(MESSAGES_NEGATIFS.length)];
-			}
 			return MESSAGES_POSITIFS[rng.nextInt(MESSAGES_POSITIFS.length)];
 		}
 		return TOUS_MESSAGES[rng.nextInt(TOUS_MESSAGES.length)];
@@ -332,7 +315,7 @@ public class FenetreSimulation extends javax.swing.JFrame {
 		progressBar.setValue(0);
 		progressBar.setString("");
 		labelCycle.setText("cycle: 0/0");
-		labelBMoyenne.setText("bienveillance moy: —");
+		labelBMoyenne.setText("bienveillance moy: \u2014");
 		boutonDemarrer.setEnabled(true);
 		boutonArreter.setEnabled(false);
 	}
@@ -340,9 +323,9 @@ public class FenetreSimulation extends javax.swing.JFrame {
 	// ─── Mise a jour UI ───────────────────────────────────────────────────────
 
 	private void onNouveauMessage() {
-		List<JournalReseau.EntreeJournal> entrees = journalLocal.getEntrees();
+		List<EntreeJournal> entrees = journalLocal.getEntrees();
 		if (!entrees.isEmpty()) {
-			JournalReseau.EntreeJournal derniere = entrees.get(entrees.size() - 1);
+			EntreeJournal derniere = entrees.get(entrees.size() - 1);
 			float b = derniere.getMessage().getBienveillance();
 			String prefixe = b >= 3f ? "[+++]" : b >= 0f ? "[ + ]" : b >= -3f ? "[ - ]" : "[---]";
 			zoneLog.append(prefixe + " " + derniere + "\n");

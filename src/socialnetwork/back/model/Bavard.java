@@ -1,10 +1,14 @@
-package socialnetwork.back;
+package socialnetwork.back.model;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import socialnetwork.back.observer.BavardObserver;
+import socialnetwork.back.observer.MessageListener;
+import socialnetwork.back.personnalite.Personnalite;
 
 /**
  * Un utilisateur du reseau: il recoit, transforme et transmet des messages.
@@ -32,9 +36,6 @@ public class Bavard implements MessageListener {
 	// compteur total de messages retransmis par ce bavard
 	private int compteurTransmissions = 0;
 
-	/**
-	 * Cree un bavard avec un nom et une personnalite.
-	 */
 	public Bavard(String nom, Personnalite personnalite) {
 		this.nom = nom;
 		this.personnalite = personnalite;
@@ -44,32 +45,14 @@ public class Bavard implements MessageListener {
 		this.observateurs = new ArrayList<>();
 	}
 
-	public String getNom() {
-		return nom;
-	}
+	public String getNom()                       { return nom; }
+	public Personnalite getPersonnalite()        { return personnalite; }
+	public List<Bavard> getAmis()                { return new ArrayList<>(amis); }
+	public List<MessageEvent> getMessagesRecus() { return new ArrayList<>(messagesRecus); }
 
-	public Personnalite getPersonnalite() {
-		return personnalite;
-	}
-
-	public List<Bavard> getAmis() {
-		return new ArrayList<>(amis);
-	}
-
-	public List<MessageEvent> getMessagesRecus() {
-		return new ArrayList<>(messagesRecus);
-	}
-
-	/**
-	 * Inscrit une fenetre (observer) pour etre notifiee des changements.
-	 */
+	/** Inscrit une fenetre (observer) pour etre notifiee des changements. */
 	public void ajouterObservateur(BavardObserver observateur) {
-		if (observateur == null) {
-			return;
-		}
-		if (observateurs.contains(observateur)) {
-			return;
-		}
+		if (observateur == null || observateurs.contains(observateur)) return;
 		observateurs.add(observateur);
 	}
 
@@ -77,40 +60,28 @@ public class Bavard implements MessageListener {
 		observateurs.remove(observateur);
 	}
 
-	/**
-	 * Ajoute un ami et notifie les observers si la liste change.
-	 */
+	/** Ajoute un ami et notifie les observers si la liste change. */
 	public void ajouterAmi(Bavard ami) {
-		if (ami == null) {
-			return;
-		}
-		if (ami == this) {
-			return;
-		}
-		if (amis.contains(ami)) {
-			return;
-		}
-		// evite les doublons dans la liste
+		if (ami == null || ami == this || amis.contains(ami)) return;
 		amis.add(ami);
 		notifierAmisMisAJour();
 	}
 
 	// ---- phase 4 : configuration ----
 
-	public float getSeuilTolerance() { return seuilTolerance; }
-	public void setSeuilTolerance(float seuil) { this.seuilTolerance = seuil; }
+	public float getSeuilTolerance()              { return seuilTolerance; }
+	public void setSeuilTolerance(float seuil)    { this.seuilTolerance = seuil; }
 
-	public double getProbabiliteRetransmission() { return probabiliteRetransmission; }
+	public double getProbabiliteRetransmission()  { return probabiliteRetransmission; }
 	public void setProbabiliteRetransmission(double probabilite) {
 		if (probabilite < 0.0) probabilite = 0.0;
 		if (probabilite > 1.0) probabilite = 1.0;
 		this.probabiliteRetransmission = probabilite;
 	}
 
-	public int getProfondeurEmission() { return profondeurEmission; }
-	public void setProfondeurEmission(int profondeur) { this.profondeurEmission = profondeur; }
-
-	public int getCompteurTransmissions() { return compteurTransmissions; }
+	public int getProfondeurEmission()            { return profondeurEmission; }
+	public void setProfondeurEmission(int p)      { this.profondeurEmission = p; }
+	public int getCompteurTransmissions()         { return compteurTransmissions; }
 
 	// ---- envoi / reception ----
 
@@ -119,28 +90,19 @@ public class Bavard implements MessageListener {
 	 * La profondeur max est celle configuree sur ce bavard.
 	 */
 	public void envoyerMessage(String contenu) {
-		if (contenu == null || contenu.isBlank()) {
-			return;
-		}
-		// le message part de 0 puis la perso agit
+		if (contenu == null || contenu.isBlank()) return;
 		float bienveillance = personnalite.appliquer(0f, contenu);
 		MessageEvent event = new MessageEvent(this, contenu, bienveillance, nom, profondeurEmission);
 		messagesVus.add(event.getId());
 		System.out.println(nom + " envoie : " + contenu + " | bienveillance = " + bienveillance
-				+ " | profondeur max = " + (profondeurEmission == MessageEvent.PROFONDEUR_INFINIE ? "infinie" : profondeurEmission));
+				+ " | profondeur max = "
+				+ (profondeurEmission == MessageEvent.PROFONDEUR_INFINIE ? "infinie" : profondeurEmission));
 		retransmettreMessage(event, null);
 	}
 
 	@Override
-	/**
-	 * Recoit un message, le transforme selon la personnalite puis le retransmet.
-	 * Phase 4 : verifie profondeur, seuil et probabilite avant retransmission.
-	 */
 	public void messageRecu(MessageEvent event) {
-		if (event == null) {
-			return;
-		}
-		// si deja vu on stop
+		if (event == null) return;
 		if (messagesVus.contains(event.getId())) {
 			System.out.println(nom + " ignore \"" + event.getContenu() + "\" deja vu");
 			return;
@@ -148,15 +110,12 @@ public class Bavard implements MessageListener {
 
 		Bavard expediteur = null;
 		if (event.getSource() instanceof Bavard) {
-			// source = dernier bavard passe
 			expediteur = (Bavard) event.getSource();
 		}
 
 		messagesVus.add(event.getId());
-		// la perso change la valeur du message (phase 4 : passe le contenu)
 		float ancienneBienveillance = event.getBienveillance();
 		float nouvelleBienveillance = personnalite.appliquer(ancienneBienveillance, event.getContenu());
-		// construit le nouveau event avec le noeud courant dans le chemin
 		MessageEvent messageTransforme = event.avecNoeud(this, nouvelleBienveillance, nom);
 		messagesRecus.add(messageTransforme);
 		notifierMessageAjoute(messageTransforme);
@@ -164,6 +123,7 @@ public class Bavard implements MessageListener {
 			nom + " recoit \"" + event.getContenu() + "\" de " + event.getAuteur()
 				+ " | bienveillance : " + ancienneBienveillance + " -> " + nouvelleBienveillance
 				+ " | chemin : " + messageTransforme.getChemin());
+
 		// phase 4 : filtre seuil de tolerance
 		if (nouvelleBienveillance < seuilTolerance) {
 			System.out.println(nom + " bloque la retransmission (seuil=" + seuilTolerance + ")");
@@ -186,45 +146,32 @@ public class Bavard implements MessageListener {
 	 * Relance un message recu en tant que nouveau message.
 	 */
 	public void faireSuivreMessage(MessageEvent message) {
-		if (message == null) {
-			return;
-		}
-		MessageEvent nouveauMessage = new MessageEvent(this, message.getContenu(), message.getBienveillance(), nom, profondeurEmission);
+		if (message == null) return;
+		MessageEvent nouveauMessage = new MessageEvent(
+				this, message.getContenu(), message.getBienveillance(), nom, profondeurEmission);
 		messagesVus.add(nouveauMessage.getId());
-		System.out.println(
-			nom + " fait suivre : " + message.getContenu() + " | bienveillance = " + message.getBienveillance());
+		System.out.println(nom + " fait suivre : " + message.getContenu()
+				+ " | bienveillance = " + message.getBienveillance());
 		retransmettreMessage(nouveauMessage, null);
 	}
 
 	// Propage aux amis en evitant celui qui vient d'envoyer.
-	// Incremente le compteur local.
 	private void retransmettreMessage(MessageEvent event, Bavard expediteur) {
-		// on envoie aux amis sauf celui juste avant
 		for (Bavard ami : amis) {
-			if (ami == expediteur) {
-				continue;
-			}
+			if (ami == expediteur) continue;
 			compteurTransmissions++;
 			ami.messageRecu(event);
 		}
 	}
 
-	// Notifie les observers que la liste de messages a change.
 	private void notifierMessageAjoute(MessageEvent event) {
-		for (BavardObserver observateur : observateurs) {
-			observateur.messageAjoute(this, event);
-		}
+		for (BavardObserver obs : observateurs) obs.messageAjoute(this, event);
 	}
 
-	// Notifie les observers que la liste d'amis a change.
 	private void notifierAmisMisAJour() {
-		for (BavardObserver observateur : observateurs) {
-			observateur.amisMisAJour(this);
-		}
+		for (BavardObserver obs : observateurs) obs.amisMisAJour(this);
 	}
 
 	@Override
-	public String toString() {
-		return nom;
-	}
+	public String toString() { return nom; }
 }

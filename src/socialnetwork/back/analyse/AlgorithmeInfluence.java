@@ -1,4 +1,4 @@
-package socialnetwork.back;
+package socialnetwork.back.analyse;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+import socialnetwork.back.model.Bavard;
+import socialnetwork.back.model.Reseau;
+
 /**
  * Algorithmes d'analyse d'influence sur le graphe de Bavards.
  *
@@ -20,8 +23,7 @@ import java.util.Queue;
  *   INTERMEDIAIRE  betweenness (Brandes)    O(n * (n + m))
  *   PAGE_RANK      iteration 100 cycles     O(iterations * n)
  *
- * Toutes les methodes retournent un LinkedHashMap trie par score decroissant
- * pour un affichage immediat en top-N.
+ * Toutes les methodes retournent un LinkedHashMap trie par score decroissant.
  *
  * Exemple :
  *   LinkedHashMap<Bavard,Double> top = AlgorithmeInfluence.pageRank(reseau);
@@ -30,8 +32,7 @@ import java.util.Queue;
  */
 public final class AlgorithmeInfluence {
 
-	private AlgorithmeInfluence() {
-	}
+	private AlgorithmeInfluence() {}
 
 	// ─── Centralite de degre ──────────────────────────────────────────────────
 
@@ -44,8 +45,7 @@ public final class AlgorithmeInfluence {
 		int n = bavards.size();
 		Map<Bavard, Double> scores = new HashMap<>();
 		for (Bavard b : bavards) {
-			double score = n <= 1 ? 0.0 : (double) b.getAmis().size() / (n - 1);
-			scores.put(b, score);
+			scores.put(b, n <= 1 ? 0.0 : (double) b.getAmis().size() / (n - 1));
 		}
 		return trierDecroissant(scores);
 	}
@@ -54,17 +54,16 @@ public final class AlgorithmeInfluence {
 
 	/**
 	 * Inverse de la distance moyenne vers les autres noeuds.
-	 * Un bavard proche peut diffuser rapidement ses messages.
+	 * Un bavard proche peut diffuser rapidement.
 	 */
 	public static LinkedHashMap<Bavard, Double> centraliteProximite(Reseau reseau) {
 		List<Bavard> bavards = reseau.getBavards();
 		int n = bavards.size();
 		Map<Bavard, Double> scores = new HashMap<>();
 		for (Bavard source : bavards) {
-			Map<Bavard, Integer> dist = bfs(source, bavards);
+			Map<Bavard, Integer> dist = bfs(source);
 			long sumDist = dist.values().stream().mapToLong(Integer::longValue).sum();
-			// composante connexe : on normalise par le nb de noeuds accessibles
-			int accessibles = dist.size(); // exclut source (bfs retire source)
+			int accessibles = dist.size();
 			double score = (sumDist == 0 || n <= 1) ? 0.0
 					: ((double) accessibles / (n - 1)) * ((double) accessibles / sumDist);
 			scores.put(source, score);
@@ -76,8 +75,7 @@ public final class AlgorithmeInfluence {
 
 	/**
 	 * Fraction des plus courts chemins passant par chaque noeud.
-	 * Algorithme de Brandes (2001), version non normalisee puis normalisee.
-	 * Un noeud a haute betweenness est un "pont" critique du reseau.
+	 * Algorithme de Brandes (2001). Un noeud a haute betweenness est un pont critique.
 	 */
 	public static LinkedHashMap<Bavard, Double> centraliteIntermediaire(Reseau reseau) {
 		List<Bavard> bavards = reseau.getBavards();
@@ -87,7 +85,7 @@ public final class AlgorithmeInfluence {
 
 		for (Bavard source : bavards) {
 			Deque<Bavard> pile = new ArrayDeque<>();
-			Map<Bavard, List<Bavard>> pred = new HashMap<>();
+			Map<Bavard, List<Bavard>> pred  = new HashMap<>();
 			Map<Bavard, Long>         sigma = new HashMap<>();
 			Map<Bavard, Integer>      dist  = new HashMap<>();
 
@@ -125,18 +123,14 @@ public final class AlgorithmeInfluence {
 				for (Bavard v : pred.get(w)) {
 					long sw = sigma.get(w);
 					long sv = sigma.get(v);
-					double coeff = (sw == 0) ? 0.0
-							: ((double) sv / sw) * (1.0 + delta.get(w));
+					double coeff = sw == 0 ? 0.0 : ((double) sv / sw) * (1.0 + delta.get(w));
 					delta.merge(v, coeff, Double::sum);
 				}
-				if (!w.equals(source)) {
-					betweenness.merge(w, delta.get(w), Double::sum);
-				}
+				if (!w.equals(source)) betweenness.merge(w, delta.get(w), Double::sum);
 			}
 		}
 
-		// normalisation par (n-1)(n-2) pour graphes non orientes
-		double norm = (n <= 2) ? 1.0 : ((n - 1.0) * (n - 2.0) / 2.0);
+		double norm = n <= 2 ? 1.0 : ((n - 1.0) * (n - 2.0) / 2.0);
 		Map<Bavard, Double> normalise = new HashMap<>();
 		for (Map.Entry<Bavard, Double> e : betweenness.entrySet()) {
 			normalise.put(e.getKey(), e.getValue() / norm);
@@ -148,9 +142,7 @@ public final class AlgorithmeInfluence {
 
 	/**
 	 * Probabilite de visiter un noeud apres une marche aleatoire longue.
-	 * Facteur d'amortissement d=0.85, convergence en 100 iterations.
-	 * Mesure l'influence globale (un noeud influence par des noeuds influents
-	 * est lui-meme tres influent).
+	 * Facteur d=0.85, convergence en 100 iterations.
 	 */
 	public static LinkedHashMap<Bavard, Double> pageRank(Reseau reseau) {
 		List<Bavard> bavards = reseau.getBavards();
@@ -158,19 +150,17 @@ public final class AlgorithmeInfluence {
 		if (n == 0) return new LinkedHashMap<>();
 
 		final double d = 0.85;
-		final int ITERATIONS = 100;
-
 		Map<Bavard, Double> pr = new HashMap<>();
 		for (Bavard b : bavards) pr.put(b, 1.0 / n);
 
-		for (int iter = 0; iter < ITERATIONS; iter++) {
+		for (int iter = 0; iter < 100; iter++) {
 			Map<Bavard, Double> nouveau = new HashMap<>();
 			double base = (1.0 - d) / n;
 			for (Bavard b : bavards) {
 				double somme = 0.0;
 				for (Bavard ami : b.getAmis()) {
-					int degreAmi = ami.getAmis().size();
-					if (degreAmi > 0) somme += pr.get(ami) / degreAmi;
+					int degre = ami.getAmis().size();
+					if (degre > 0) somme += pr.get(ami) / degre;
 				}
 				nouveau.put(b, base + d * somme);
 			}
@@ -183,7 +173,6 @@ public final class AlgorithmeInfluence {
 
 	/**
 	 * Score composite = 0.25*degre + 0.25*proximite + 0.25*intermediaire + 0.25*pagerank.
-	 * Normalise chaque metrique dans [0,1] avant fusion.
 	 * Donne une vision equilibree de l'influence.
 	 */
 	public static LinkedHashMap<Bavard, Double> scoreComposite(Reseau reseau) {
@@ -194,20 +183,18 @@ public final class AlgorithmeInfluence {
 
 		Map<Bavard, Double> composite = new HashMap<>();
 		for (Bavard b : reseau.getBavards()) {
-			double score = 0.25 * deg.getOrDefault(b, 0.0)
-						 + 0.25 * prox.getOrDefault(b, 0.0)
-						 + 0.25 * btw.getOrDefault(b, 0.0)
-						 + 0.25 * pr.getOrDefault(b, 0.0);
-			composite.put(b, score);
+			composite.put(b,
+				0.25 * deg.getOrDefault(b, 0.0)
+				+ 0.25 * prox.getOrDefault(b, 0.0)
+				+ 0.25 * btw.getOrDefault(b, 0.0)
+				+ 0.25 * pr.getOrDefault(b, 0.0));
 		}
 		return trierDecroissant(composite);
 	}
 
 	// ─── Rapport textuel ──────────────────────────────────────────────────────
 
-	/**
-	 * Rapport complet listant les 4 metriques et le score composite.
-	 */
+	/** Rapport complet listant les 4 metriques et le score composite. */
 	public static String rapport(Reseau reseau) {
 		if (reseau.getBavards().isEmpty()) return "reseau vide\n";
 
@@ -253,7 +240,7 @@ public final class AlgorithmeInfluence {
 	// ─── Utilitaires internes ─────────────────────────────────────────────────
 
 	/** BFS depuis une source, retourne distance par noeud (source exclue). */
-	private static Map<Bavard, Integer> bfs(Bavard source, List<Bavard> tous) {
+	private static Map<Bavard, Integer> bfs(Bavard source) {
 		Map<Bavard, Integer> dist = new HashMap<>();
 		dist.put(source, 0);
 		Queue<Bavard> queue = new LinkedList<>();
@@ -271,7 +258,6 @@ public final class AlgorithmeInfluence {
 		return dist;
 	}
 
-	/** Trie une Map par valeur decroissante dans un LinkedHashMap. */
 	private static LinkedHashMap<Bavard, Double> trierDecroissant(Map<Bavard, Double> scores) {
 		LinkedHashMap<Bavard, Double> result = new LinkedHashMap<>();
 		scores.entrySet().stream()

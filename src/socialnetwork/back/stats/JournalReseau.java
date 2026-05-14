@@ -1,63 +1,30 @@
-package socialnetwork.back;
+package socialnetwork.back.stats;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import socialnetwork.back.analyse.AnalyseurSentiment;
+import socialnetwork.back.analyse.Emotion;
+import socialnetwork.back.model.Bavard;
+import socialnetwork.back.model.MessageEvent;
+import socialnetwork.back.model.Reseau;
+import socialnetwork.back.observer.BavardObserver;
+
 /**
  * Journal chronologique de tous les messages propages dans le reseau.
  *
  * S'inscrit comme BavardObserver sur chaque bavard.
- * Chaque entree capture : horodatage, nom du recepteur, MessageEvent.
+ * Chaque entree ({@link EntreeJournal}) capture : horodatage, nom du recepteur,
+ * MessageEvent et resultat de l'analyse de sentiment.
  *
  * Fonctionnalites :
- *   - filtrage par bavard, par bienveillance, par contenu (recherche)
+ *   - filtrage par bavard, par bienveillance, par contenu, par emotion
  *   - export texte plein et CSV
  *   - ecouteurs (Runnable) notifies a chaque nouvel evenement
- *     (utile pour mettre a jour l'interface sans couplage fort)
  */
 public class JournalReseau implements BavardObserver {
-
-	private static final DateTimeFormatter FMT_COURT  = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
-	private static final DateTimeFormatter FMT_ISO    = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-
-	// ─── EntreeJournal ────────────────────────────────────────────────────────
-
-	public static final class EntreeJournal {
-		private final LocalDateTime horodatage;
-		private final String        nomBavard;
-		private final MessageEvent  message;
-		/** Sentiment analyse a la creation de l'entree. */
-		private final AnalyseurSentiment.ResultatSentiment sentiment;
-
-		EntreeJournal(String nomBavard, MessageEvent message) {
-			this.horodatage = LocalDateTime.now();
-			this.nomBavard  = nomBavard;
-			this.message    = message;
-			this.sentiment  = AnalyseurSentiment.analyser(message.getContenu());
-		}
-
-		public LocalDateTime getHorodatage()   { return horodatage; }
-		public String getNomBavard()            { return nomBavard; }
-		public MessageEvent getMessage()        { return message; }
-		public AnalyseurSentiment.ResultatSentiment getSentiment() { return sentiment; }
-
-		/** Representation courte pour l'affichage dans la liste. */
-		@Override
-		public String toString() {
-			return String.format("[%s] %-10s | b=%+5.1f | %-8s | %s",
-					horodatage.format(FMT_COURT),
-					nomBavard,
-					message.getBienveillance(),
-					sentiment.getEmotion().label(),
-					message.getContenu());
-		}
-	}
-
-	// ─── Etat ─────────────────────────────────────────────────────────────────
 
 	private final List<EntreeJournal> entrees   = new ArrayList<>();
 	private final List<Runnable>      ecouteurs = new ArrayList<>();
@@ -65,14 +32,12 @@ public class JournalReseau implements BavardObserver {
 
 	public JournalReseau(Reseau reseau) {
 		this.reseau = reseau;
-		for (Bavard b : reseau.getBavards()) {
-			b.ajouterObservateur(this);
-		}
+		for (Bavard b : reseau.getBavards()) b.ajouterObservateur(this);
 	}
 
 	// ─── Observer ─────────────────────────────────────────────────────────────
 
-	/** Abonne ce journal a un nouveau bavard ajoute apres la creation du journal. */
+	/** Abonne ce journal a un nouveau bavard ajoute apres la creation. */
 	public void observerBavard(Bavard bavard) {
 		bavard.ajouterObservateur(this);
 	}
@@ -84,16 +49,13 @@ public class JournalReseau implements BavardObserver {
 	}
 
 	@Override
-	public void amisMisAJour(Bavard bavard) {
-		/* non utilise dans le journal */
-	}
+	public void amisMisAJour(Bavard bavard) { /* non utilise */ }
 
 	// ─── Ecouteurs ────────────────────────────────────────────────────────────
 
 	/**
-	 * Ajoute un ecouteur (Runnable) appele apres chaque nouveau message.
-	 * L'ecouteur est invoque depuis le thread qui a declenche la propagation —
-	 * utiliser SwingUtilities.invokeLater si mise a jour de l'interface.
+	 * Ajoute un ecouteur appele apres chaque nouveau message.
+	 * Utiliser SwingUtilities.invokeLater si mise a jour de l'interface.
 	 */
 	public void ajouterEcouteur(Runnable ecouteur) {
 		if (ecouteur != null) ecouteurs.add(ecouteur);
@@ -105,16 +67,9 @@ public class JournalReseau implements BavardObserver {
 
 	// ─── Acces direct ─────────────────────────────────────────────────────────
 
-	/** Toutes les entrees dans l'ordre d'arrivee (vue non modifiable). */
-	public List<EntreeJournal> getEntrees() {
-		return Collections.unmodifiableList(entrees);
-	}
-
-	/** Nombre d'entrees. */
-	public int getTaille() { return entrees.size(); }
-
-	/** Vide le journal. */
-	public void effacer()  { entrees.clear(); notifierEcouteurs(); }
+	public List<EntreeJournal> getEntrees() { return Collections.unmodifiableList(entrees); }
+	public int getTaille()                  { return entrees.size(); }
+	public void effacer()                   { entrees.clear(); notifierEcouteurs(); }
 
 	// ─── Filtres ──────────────────────────────────────────────────────────────
 
@@ -135,7 +90,7 @@ public class JournalReseau implements BavardObserver {
 				.collect(Collectors.toList());
 	}
 
-	/** Entrees dont le contenu du message contient le mot cle (insensible casse). */
+	/** Entrees dont le contenu contient le mot cle (insensible a la casse). */
 	public List<EntreeJournal> rechercherContenu(String motCle) {
 		if (motCle == null || motCle.isBlank()) return new ArrayList<>(entrees);
 		String lower = motCle.toLowerCase();
@@ -145,7 +100,7 @@ public class JournalReseau implements BavardObserver {
 	}
 
 	/** Entrees ayant une emotion dominante donnee. */
-	public List<EntreeJournal> filtrerParEmotion(AnalyseurSentiment.Emotion emotion) {
+	public List<EntreeJournal> filtrerParEmotion(Emotion emotion) {
 		return entrees.stream()
 				.filter(e -> e.getSentiment().getEmotion() == emotion)
 				.collect(Collectors.toList());
@@ -157,10 +112,8 @@ public class JournalReseau implements BavardObserver {
 	public String exporterTexte() {
 		if (entrees.isEmpty()) return "(journal vide)\n";
 		StringBuilder sb = new StringBuilder();
-		sb.append("=== journal du reseau  (").append(entrees.size()).append(" entrees) ===\n");
-		for (EntreeJournal e : entrees) {
-			sb.append(e).append('\n');
-		}
+		sb.append("=== journal du reseau (").append(entrees.size()).append(" entrees) ===\n");
+		for (EntreeJournal e : entrees) sb.append(e).append('\n');
 		return sb.toString();
 	}
 
@@ -170,7 +123,7 @@ public class JournalReseau implements BavardObserver {
 			"horodatage;bavard;bienveillance;emotion;score_sentiment;auteur;contenu;chemin\n");
 		for (EntreeJournal e : entrees) {
 			MessageEvent m = e.getMessage();
-			sb.append(e.getHorodatage().format(FMT_ISO)).append(';');
+			sb.append(e.getHorodatageIso()).append(';');
 			sb.append(e.getNomBavard()).append(';');
 			sb.append(String.format("%.2f", m.getBienveillance())).append(';');
 			sb.append(e.getSentiment().getEmotion().label()).append(';');
@@ -182,7 +135,7 @@ public class JournalReseau implements BavardObserver {
 		return sb.toString();
 	}
 
-	/** Statistiques rapides du journal (comptages, moyennes). */
+	/** Statistiques rapides du journal. */
 	public String resumeRapide() {
 		if (entrees.isEmpty()) return "journal vide\n";
 		double bMoy = entrees.stream()

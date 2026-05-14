@@ -1,8 +1,12 @@
-package socialnetwork.back;
+package socialnetwork.back.topologie;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import socialnetwork.back.model.Bavard;
+import socialnetwork.back.model.Reseau;
+import socialnetwork.back.personnalite.Personnalite;
 
 /**
  * Generateur de topologies de reseau preconfigurées.
@@ -22,8 +26,7 @@ import java.util.Random;
  */
 public final class GenerateurTopologie {
 
-	private GenerateurTopologie() {
-	}
+	private GenerateurTopologie() {}
 
 	// ─── Enum Topologie ───────────────────────────────────────────────────────
 
@@ -37,14 +40,10 @@ public final class GenerateurTopologie {
 
 		private final String label;
 
-		Topologie(String label) {
-			this.label = label;
-		}
+		Topologie(String label) { this.label = label; }
 
 		@Override
-		public String toString() {
-			return label;
-		}
+		public String toString() { return label; }
 
 		/** Breve description didactique de la topologie. */
 		public String description() {
@@ -70,9 +69,7 @@ public final class GenerateurTopologie {
 	};
 
 	private static String prenom(int indexAbsolu) {
-		return indexAbsolu < PRENOMS.length
-				? PRENOMS[indexAbsolu]
-				: "B" + indexAbsolu;
+		return indexAbsolu < PRENOMS.length ? PRENOMS[indexAbsolu] : "B" + indexAbsolu;
 	}
 
 	// ─── Topologies ───────────────────────────────────────────────────────────
@@ -104,9 +101,8 @@ public final class GenerateurTopologie {
 	}
 
 	/**
-	 * Grille rectangulaire : chaque cellule est connectee a ses voisins
+	 * Grille rectangulaire : chaque cellule connectee a ses voisins
 	 * haut, bas, gauche, droite.
-	 * La grille la plus proche de n noeuds est calculee automatiquement.
 	 */
 	public static void grille(Reseau reseau, int lignes, int colonnes, Personnalite[] persos) {
 		if (lignes < 1) lignes = 1;
@@ -124,9 +120,8 @@ public final class GenerateurTopologie {
 
 	/**
 	 * Petit monde (Watts-Strogatz simplifie) :
-	 *   1. Anneau k-regulier (chaque noeud relie a ses k/2 voisins de chaque cote)
-	 *   2. Chaque lien est recable avec probabilite probRewire
-	 * Produit un reseau a fort coefficient de clustering et faible diametre.
+	 *   1. Anneau k-regulier
+	 *   2. Chaque lien recable avec probabilite probRewire
 	 *
 	 * @param k          degre initial (pair, >= 2)
 	 * @param probRewire probabilite de recablage [0.0 .. 1.0]
@@ -154,21 +149,16 @@ public final class GenerateurTopologie {
 				if (rng.nextDouble() < probRewire) {
 					int cible = rng.nextInt(n);
 					int essais = 0;
-					while ((cible == i) && essais < 10) {
-						cible = rng.nextInt(n);
-						essais++;
-					}
-					if (cible != i) {
-						reseau.connecter(bavards.get(i), bavards.get(cible));
-					}
+					while (cible == i && essais < 10) { cible = rng.nextInt(n); essais++; }
+					if (cible != i) reseau.connecter(bavards.get(i), bavards.get(cible));
 				}
 			}
 		}
 	}
 
 	/**
-	 * Aleatoire (Erdos-Renyi G(n,p)) : chaque paire de noeuds est connectee
-	 * independamment avec probabilite p.
+	 * Aleatoire (Erdos-Renyi G(n,p)) : chaque paire de noeuds connectee
+	 * avec probabilite p.
 	 *
 	 * @param p    probabilite de lien, typiquement 0.20..0.40
 	 * @param seed graine pour la reproductibilite
@@ -179,12 +169,10 @@ public final class GenerateurTopologie {
 		Random rng = new Random(seed);
 		for (int i = 0; i < n; i++) {
 			for (int j = i + 1; j < n; j++) {
-				if (rng.nextDouble() < p) {
-					reseau.connecter(bavards.get(i), bavards.get(j));
-				}
+				if (rng.nextDouble() < p) reseau.connecter(bavards.get(i), bavards.get(j));
 			}
 		}
-		// garantir la connexite : chainer tous les noeuds isoles
+		// garantir la connexite
 		for (int i = 0; i < n - 1; i++) {
 			if (bavards.get(i).getAmis().isEmpty() || bavards.get(i + 1).getAmis().isEmpty()) {
 				reseau.connecter(bavards.get(i), bavards.get(i + 1));
@@ -193,8 +181,8 @@ public final class GenerateurTopologie {
 	}
 
 	/**
-	 * Graphe complet (clique) : chaque noeud est connecte a tous les autres.
-	 * Diametre = 1, propagation instantanee en 1 hop.
+	 * Graphe complet (clique) : chaque noeud connecte a tous les autres.
+	 * Diametre = 1.
 	 */
 	public static void complet(Reseau reseau, int n, Personnalite[] persos) {
 		if (n < 2) n = 2;
@@ -209,13 +197,12 @@ public final class GenerateurTopologie {
 	// ─── Dispatching generique ────────────────────────────────────────────────
 
 	/**
-	 * Genere un reseau selon la topologie choisie avec des parametres par defaut
-	 * raisonnables. Les personnalites sont distribuees cycliquement.
+	 * Genere un reseau selon la topologie choisie avec des parametres par defaut.
 	 *
-	 * @param reseau     reseau cible (doit etre vide)
-	 * @param topologie  type de topologie
-	 * @param n          nombre de bavards souhaites (approx pour grille)
-	 * @param persos     tableau de personnalites (peut etre null -> NEUTRE)
+	 * @param reseau    reseau cible (doit etre vide)
+	 * @param topologie type de topologie
+	 * @param n         nombre de bavards souhaites (approx pour grille)
+	 * @param persos    tableau de personnalites (peut etre null -> NEUTRE)
 	 */
 	public static void generer(Reseau reseau, Topologie topologie, int n, Personnalite[] persos) {
 		if (persos == null || persos.length == 0) {
@@ -240,10 +227,6 @@ public final class GenerateurTopologie {
 
 	// ─── Utilitaires ──────────────────────────────────────────────────────────
 
-	/**
-	 * Cree n bavards dans le reseau avec des noms et personnalites automatiques.
-	 * L'offset evite les collisions de noms si le reseau contient deja des bavards.
-	 */
 	private static List<Bavard> creerBavards(Reseau reseau, int n, Personnalite[] persos) {
 		List<Bavard> liste = new ArrayList<>();
 		int offset = reseau.getBavards().size();
@@ -258,14 +241,14 @@ public final class GenerateurTopologie {
 		return liste;
 	}
 
-	/** Calcule le degre moyen du reseau. */
+	/** Degre moyen du reseau. */
 	public static double degreMoyen(Reseau reseau) {
 		List<Bavard> bavards = reseau.getBavards();
 		if (bavards.isEmpty()) return 0.0;
 		return bavards.stream().mapToInt(b -> b.getAmis().size()).average().orElse(0.0);
 	}
 
-	/** Calcule la densite du graphe (liens existants / liens max possibles). */
+	/** Densite : liens existants / liens max possibles. */
 	public static double densite(Reseau reseau) {
 		int n = reseau.getBavards().size();
 		if (n <= 1) return 0.0;
@@ -274,7 +257,7 @@ public final class GenerateurTopologie {
 		return (double) liens / maxLiens;
 	}
 
-	/** Description textuelle du reseau (topologie, degres, densite). */
+	/** Description textuelle du reseau. */
 	public static String description(Reseau reseau) {
 		List<Bavard> bavards = reseau.getBavards();
 		int n = bavards.size();

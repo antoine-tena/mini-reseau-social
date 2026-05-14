@@ -1,4 +1,4 @@
-package socialnetwork.back;
+package socialnetwork.back.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -96,46 +96,19 @@ public class MessageEvent extends EventObject {
 
 	// reste entre -10 et 10
 	private float bornerBienveillance(float valeur) {
-		if (valeur > 10f) {
-			return 10f;
-		}
-		if (valeur < -10f) {
-			return -10f;
-		}
+		if (valeur > 10f) return 10f;
+		if (valeur < -10f) return -10f;
 		return valeur;
 	}
 
-	public UUID getId() {
-		return id;
-	}
-
-	public String getContenu() {
-		return contenu;
-	}
-
-	public float getBienveillance() {
-		return bienveillance;
-	}
-
-	public String getAuteur() {
-		return auteur;
-	}
-
-	public List<String> getChemin() {
-		return chemin;
-	}
-
-	public int getHopActuel() {
-		return hopActuel;
-	}
-
-	public int getProfondeurMax() {
-		return profondeurMax;
-	}
-
-	public int getTransmissions() {
-		return transmissions;
-	}
+	public UUID getId()               { return id; }
+	public String getContenu()        { return contenu; }
+	public float getBienveillance()   { return bienveillance; }
+	public String getAuteur()         { return auteur; }
+	public List<String> getChemin()   { return chemin; }
+	public int getHopActuel()         { return hopActuel; }
+	public int getProfondeurMax()     { return profondeurMax; }
+	public int getTransmissions()     { return transmissions; }
 
 	@Override
 	public String toString() {

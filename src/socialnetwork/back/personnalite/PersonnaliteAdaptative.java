@@ -1,7 +1,7 @@
-package socialnetwork.back;
+package socialnetwork.back.personnalite;
 
 /**
- * Phase 4 - personnalite avec apprentissage.
+ * Personnalite avec apprentissage.
  *
  * Sa variation evolue a chaque message recu :
  *  - si la bienveillance entrante est positive  -> variation augmente de delta
@@ -9,18 +9,14 @@ package socialnetwork.back;
  *
  * La variation reste bornee dans [-variationMax, variationMax].
  *
- * Simule un bavard qui s'adapte a son environnement : entourage positif -> 
+ * Simule un bavard qui s'adapte a son environnement : entourage positif ->
  * il devient plus positif au fil du temps.
  */
 public class PersonnaliteAdaptative extends Personnalite {
 
-	// variation actuelle, evolue a chaque appel
 	private float variationCourante;
-	// pas d'evolution a chaque message
 	private final float delta;
-	// borne absolue de la variation
 	private final float variationMax;
-	// compteur d'adaptations
 	private int nbAdaptations = 0;
 
 	public PersonnaliteAdaptative(String nom, float variationInitiale, float delta, float variationMax) {
@@ -32,7 +28,6 @@ public class PersonnaliteAdaptative extends Personnalite {
 
 	@Override
 	public float appliquer(float bienveillance) {
-		// adapte avant d'appliquer
 		adapter(bienveillance);
 		float resultat = bienveillance + variationCourante;
 		if (resultat > 10f) return 10f;
@@ -45,7 +40,6 @@ public class PersonnaliteAdaptative extends Personnalite {
 		return appliquer(bienveillance);
 	}
 
-	// Fait evoluer la variation selon le signe de la bienveillance entrante.
 	private void adapter(float bienveillance) {
 		if (bienveillance > 0f) {
 			variationCourante = Math.min(variationCourante + delta, variationMax);
@@ -55,13 +49,8 @@ public class PersonnaliteAdaptative extends Personnalite {
 		nbAdaptations++;
 	}
 
-	public float getVariationCourante() {
-		return variationCourante;
-	}
-
-	public int getNbAdaptations() {
-		return nbAdaptations;
-	}
+	public float getVariationCourante() { return variationCourante; }
+	public int getNbAdaptations()       { return nbAdaptations; }
 
 	@Override
 	public String toString() {

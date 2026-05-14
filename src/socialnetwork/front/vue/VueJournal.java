@@ -1,11 +1,9 @@
-package socialnetwork.front;
+package socialnetwork.front.vue;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
 import java.awt.FlowLayout;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -18,9 +16,10 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-import socialnetwork.back.AnalyseurSentiment;
-import socialnetwork.back.JournalReseau;
-import socialnetwork.back.MessageEvent;
+import socialnetwork.back.analyse.Emotion;
+import socialnetwork.back.model.MessageEvent;
+import socialnetwork.back.stats.EntreeJournal;
+import socialnetwork.back.stats.JournalReseau;
 
 /**
  * Panneau Swing affichant le journal chronologique des messages.
@@ -29,7 +28,7 @@ import socialnetwork.back.MessageEvent;
  *   - affichage temps reel (ecoute JournalReseau.ajouterEcouteur)
  *   - recherche par mot cle dans le contenu
  *   - filtre par niveau de bienveillance
- *   - filtre par emotion (AnalyseurSentiment)
+ *   - filtre par emotion
  *   - export CSV vers le presse-papier
  *   - effacement avec confirmation
  */
@@ -37,10 +36,10 @@ public class VueJournal extends JPanel {
 
 	private final JournalReseau journal;
 
-	private final JTextArea   zoneTexte;
-	private final JTextField  champRecherche;
-	private final JComboBox<String> filtreBienveillance;
-	private final JComboBox<String> filtreEmotion;
+	private final JTextArea             zoneTexte;
+	private final JTextField            champRecherche;
+	private final JComboBox<String>     filtreBienveillance;
+	private final JComboBox<String>     filtreEmotion;
 
 	private static final String[] OPTIONS_BIENVEILLANCE = {
 		"tout", "positif (b > 1)", "tres positif (b > 5)",
@@ -49,7 +48,7 @@ public class VueJournal extends JPanel {
 
 	private static final String[] OPTIONS_EMOTION;
 	static {
-		AnalyseurSentiment.Emotion[] emotions = AnalyseurSentiment.Emotion.values();
+		Emotion[] emotions = Emotion.values();
 		OPTIONS_EMOTION = new String[emotions.length + 1];
 		OPTIONS_EMOTION[0] = "toutes emotions";
 		for (int i = 0; i < emotions.length; i++) {
@@ -58,11 +57,11 @@ public class VueJournal extends JPanel {
 	}
 
 	public VueJournal(JournalReseau journal) {
-		this.journal = journal;
-		this.zoneTexte = new JTextArea();
+		this.journal             = journal;
+		this.zoneTexte           = new JTextArea();
 		this.zoneTexte.setEditable(false);
 		this.zoneTexte.setFont(new java.awt.Font(java.awt.Font.MONOSPACED, java.awt.Font.PLAIN, 11));
-		this.champRecherche     = new JTextField(16);
+		this.champRecherche      = new JTextField(16);
 		this.filtreBienveillance = new JComboBox<>(OPTIONS_BIENVEILLANCE);
 		this.filtreEmotion       = new JComboBox<>(OPTIONS_EMOTION);
 
@@ -70,15 +69,10 @@ public class VueJournal extends JPanel {
 		setBorder(BorderFactory.createTitledBorder("journal des messages"));
 
 		construireInterface();
-
-		// mise a jour automatique quand un nouveau message arrive
 		journal.ajouterEcouteur(() -> SwingUtilities.invokeLater(this::actualiser));
 	}
 
-	// ─── Construction UI ──────────────────────────────────────────────────────
-
 	private void construireInterface() {
-		// barre de controles en haut
 		JPanel gauche = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
 		gauche.add(new JLabel("filtrer b:"));
 		gauche.add(filtreBienveillance);
@@ -99,13 +93,9 @@ public class VueJournal extends JPanel {
 		barre.add(gauche, BorderLayout.CENTER);
 		barre.add(droite, BorderLayout.EAST);
 
-		JPanel panneauNord = new JPanel(new BorderLayout());
-		panneauNord.add(barre, BorderLayout.CENTER);
-
-		add(panneauNord, BorderLayout.NORTH);
+		add(barre, BorderLayout.NORTH);
 		add(new JScrollPane(zoneTexte), BorderLayout.CENTER);
 
-		// listener sur les filtres
 		filtreBienveillance.addActionListener(e -> actualiser());
 		filtreEmotion.addActionListener(e -> actualiser());
 		champRecherche.addActionListener(e -> actualiser());
@@ -123,11 +113,8 @@ public class VueJournal extends JPanel {
 		boutonCsv.addActionListener(e -> exporterCsv());
 	}
 
-	// ─── Logique de filtrage ──────────────────────────────────────────────────
-
-	/** Rafraichit la zone de texte en appliquant les filtres actifs. */
 	public void actualiser() {
-		List<JournalReseau.EntreeJournal> entrees = getEntreesFiltrees();
+		List<EntreeJournal> entrees = getEntreesFiltrees();
 		StringBuilder sb = new StringBuilder();
 
 		int total = journal.getTaille();
@@ -139,16 +126,13 @@ public class VueJournal extends JPanel {
 		}
 		sb.append('\n');
 
-		for (JournalReseau.EntreeJournal e : entrees) {
-			sb.append(formatEntree(e)).append('\n');
-		}
+		for (EntreeJournal e : entrees) sb.append(formatEntree(e)).append('\n');
 
 		zoneTexte.setText(sb.toString());
 		zoneTexte.setCaretPosition(0);
 	}
 
-	/** Formate une entree avec indicateur de bienveillance visuel. */
-	private String formatEntree(JournalReseau.EntreeJournal e) {
+	private String formatEntree(EntreeJournal e) {
 		MessageEvent m = e.getMessage();
 		float b = m.getBienveillance();
 		String indicateur = b >= 5f ? "+++" : b >= 1f ? "+  " : b >= -1f ? "~  " : b >= -5f ? "-  " : "---";
@@ -157,12 +141,10 @@ public class VueJournal extends JPanel {
 				indicateur, e, chemin, e.getSentiment().getEmotion().emoji());
 	}
 
-	private List<JournalReseau.EntreeJournal> getEntreesFiltrees() {
-		// 1. filtre recherche texte
+	private List<EntreeJournal> getEntreesFiltrees() {
 		String recherche = champRecherche.getText().trim();
-		List<JournalReseau.EntreeJournal> base = journal.rechercherContenu(recherche);
+		List<EntreeJournal> base = journal.rechercherContenu(recherche);
 
-		// 2. filtre bienveillance
 		int idxB = filtreBienveillance.getSelectedIndex();
 		if (idxB > 0) {
 			base = base.stream().filter(e -> {
@@ -175,23 +157,19 @@ public class VueJournal extends JPanel {
 					case 5 -> b >= -1f && b <= 1f;
 					default -> true;
 				};
-			}).collect(java.util.stream.Collectors.toList());
+			}).collect(Collectors.toList());
 		}
 
-		// 3. filtre emotion
 		int idxE = filtreEmotion.getSelectedIndex();
 		if (idxE > 0) {
-			AnalyseurSentiment.Emotion cible =
-					AnalyseurSentiment.Emotion.values()[idxE - 1];
+			Emotion cible = Emotion.values()[idxE - 1];
 			base = base.stream()
 					.filter(e -> e.getSentiment().getEmotion() == cible)
-					.collect(java.util.stream.Collectors.toList());
+					.collect(Collectors.toList());
 		}
 
 		return base;
 	}
-
-	// ─── Export ───────────────────────────────────────────────────────────────
 
 	private void exporterCsv() {
 		String csv = journal.exporterCsv();

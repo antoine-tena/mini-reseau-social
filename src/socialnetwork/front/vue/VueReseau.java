@@ -1,4 +1,4 @@
-package socialnetwork.front;
+package socialnetwork.front.vue;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -15,38 +15,34 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import socialnetwork.back.Bavard;
-import socialnetwork.back.BavardObserver;
-import socialnetwork.back.MessageEvent;
-import socialnetwork.back.Personnalite;
-import socialnetwork.back.Reseau;
+import socialnetwork.back.model.Bavard;
+import socialnetwork.back.model.MessageEvent;
+import socialnetwork.back.model.Reseau;
+import socialnetwork.back.observer.BavardObserver;
+import socialnetwork.back.personnalite.Personnalite;
 
 /**
  * Panneau graphique qui dessine le reseau de bavards.
- * Bonus visualisation : noeuds colores par personnalite, liens entre amis.
+ * Noeuds colores par personnalite, liens entre amis.
  */
 public class VueReseau extends JPanel implements BavardObserver {
 
-	private final Reseau reseau;
-	private static final int RAYON_NOEUD = 28;
+	protected final Reseau reseau;
+	protected static final int RAYON_NOEUD = 28;
 
 	public VueReseau(Reseau reseau) {
 		this.reseau = reseau;
 		setBackground(Color.WHITE);
 		setBorder(BorderFactory.createTitledBorder("visualisation du reseau"));
-		for (Bavard b : reseau.getBavards()) {
-			b.ajouterObservateur(this);
-		}
+		for (Bavard b : reseau.getBavards()) b.ajouterObservateur(this);
 	}
 
-	/** Inscrit ce panneau comme observer d'un nouveau bavard et redessine. */
 	public void observerBavard(Bavard bavard) {
 		bavard.ajouterObservateur(this);
 		SwingUtilities.invokeLater(this::repaint);
 	}
 
-	/** Calcule les positions en cercle selon le nombre de bavards. */
-	private Map<Bavard, Point> calculerPositions() {
+	protected Map<Bavard, Point> calculerPositions() {
 		Map<Bavard, Point> positions = new LinkedHashMap<>();
 		List<Bavard> bavards = reseau.getBavards();
 		int n = bavards.size();
@@ -79,7 +75,7 @@ public class VueReseau extends JPanel implements BavardObserver {
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		FontMetrics fm = g2.getFontMetrics();
 
-		// liens (une seule fois par paire, comparaison de noms pour eviter les doublons)
+		// liens
 		g2.setStroke(new BasicStroke(1.8f));
 		g2.setColor(new Color(160, 160, 160));
 		for (Map.Entry<Bavard, Point> entry : positions.entrySet()) {
@@ -97,33 +93,33 @@ public class VueReseau extends JPanel implements BavardObserver {
 		for (Map.Entry<Bavard, Point> entry : positions.entrySet()) {
 			Bavard b = entry.getKey();
 			Point p = entry.getValue();
-
-			Color fill = couleurPersonnalite(b.getPersonnalite());
-			g2.setColor(fill);
-			g2.fillOval(p.x - RAYON_NOEUD, p.y - RAYON_NOEUD, 2 * RAYON_NOEUD, 2 * RAYON_NOEUD);
-			g2.setColor(Color.DARK_GRAY);
-			g2.setStroke(new BasicStroke(2f));
-			g2.drawOval(p.x - RAYON_NOEUD, p.y - RAYON_NOEUD, 2 * RAYON_NOEUD, 2 * RAYON_NOEUD);
-
-			// nom centre dans le noeud
-			g2.setColor(Color.BLACK);
-			String nom = b.getNom();
-			int tw = fm.stringWidth(nom);
-			g2.drawString(nom, p.x - tw / 2, p.y + fm.getAscent() / 2 - 1);
-
-			// config sous le noeud (seuil, proba) si non defaut
-			String conf = configBavard(b);
-			if (!conf.isEmpty()) {
-				g2.setColor(new Color(80, 80, 80));
-				int cw = fm.stringWidth(conf);
-				g2.drawString(conf, p.x - cw / 2, p.y + RAYON_NOEUD + fm.getHeight());
-			}
+			dessinerNoeud(g2, fm, b, p);
 		}
 
 		dessinerLegende(g2, fm);
 	}
 
-	private void dessinerLegende(Graphics2D g2, FontMetrics fm) {
+	protected void dessinerNoeud(Graphics2D g2, FontMetrics fm, Bavard b, Point p) {
+		Color fill = couleurPersonnalite(b.getPersonnalite());
+		g2.setColor(fill);
+		g2.fillOval(p.x - RAYON_NOEUD, p.y - RAYON_NOEUD, 2 * RAYON_NOEUD, 2 * RAYON_NOEUD);
+		g2.setColor(Color.DARK_GRAY);
+		g2.setStroke(new BasicStroke(2f));
+		g2.drawOval(p.x - RAYON_NOEUD, p.y - RAYON_NOEUD, 2 * RAYON_NOEUD, 2 * RAYON_NOEUD);
+		g2.setColor(Color.BLACK);
+		String nom = b.getNom();
+		int tw = fm.stringWidth(nom);
+		g2.drawString(nom, p.x - tw / 2, p.y + fm.getAscent() / 2 - 1);
+
+		String conf = configBavard(b);
+		if (!conf.isEmpty()) {
+			g2.setColor(new Color(80, 80, 80));
+			int cw = fm.stringWidth(conf);
+			g2.drawString(conf, p.x - cw / 2, p.y + RAYON_NOEUD + fm.getHeight());
+		}
+	}
+
+	protected void dessinerLegende(Graphics2D g2, FontMetrics fm) {
 		int x = 8;
 		int y = getHeight() - 3 * (fm.getHeight() + 2) - 8;
 		if (y < 10) return;
@@ -141,18 +137,16 @@ public class VueReseau extends JPanel implements BavardObserver {
 		}
 	}
 
-	private Color couleurPersonnalite(Personnalite p) {
+	protected Color couleurPersonnalite(Personnalite p) {
 		float v = p.getVariationBienveillance();
-		if (v >= 0.5f)  return new Color(144, 238, 144); // vert clair
-		if (v <= -0.5f) return new Color(255, 182, 193); // rose clair
-		return new Color(255, 255, 153);                  // jaune clair
+		if (v >= 0.5f)  return new Color(144, 238, 144);
+		if (v <= -0.5f) return new Color(255, 182, 193);
+		return new Color(255, 255, 153);
 	}
 
 	private String configBavard(Bavard b) {
 		StringBuilder sb = new StringBuilder();
-		if (b.getSeuilTolerance() > -10f) {
-			sb.append("s=").append(String.format("%.0f", b.getSeuilTolerance()));
-		}
+		if (b.getSeuilTolerance() > -10f) sb.append("s=").append(String.format("%.0f", b.getSeuilTolerance()));
 		if (b.getProbabiliteRetransmission() < 1.0) {
 			if (sb.length() > 0) sb.append(' ');
 			sb.append("p=").append(String.format("%.0f%%", b.getProbabiliteRetransmission() * 100));
@@ -161,12 +155,8 @@ public class VueReseau extends JPanel implements BavardObserver {
 	}
 
 	@Override
-	public void messageAjoute(Bavard bavard, MessageEvent event) {
-		// pas de repaint sur chaque message pour eviter les flickerings
-	}
+	public void messageAjoute(Bavard bavard, MessageEvent event) { /* pas de repaint */ }
 
 	@Override
-	public void amisMisAJour(Bavard bavard) {
-		SwingUtilities.invokeLater(this::repaint);
-	}
+	public void amisMisAJour(Bavard bavard) { SwingUtilities.invokeLater(this::repaint); }
 }

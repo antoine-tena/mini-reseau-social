@@ -1,4 +1,6 @@
-package socialnetwork.back;
+package socialnetwork.back.observer;
+
+import socialnetwork.back.model.MessageEvent;
 
 /**
  * Recoit un message lors de la propagation.

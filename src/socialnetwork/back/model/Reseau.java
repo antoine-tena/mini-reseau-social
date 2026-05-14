@@ -1,4 +1,4 @@
-package socialnetwork.back;
+package socialnetwork.back.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,12 +15,7 @@ public class Reseau {
 	}
 
 	public void ajouterBavard(Bavard bavard) {
-		if (bavard == null) {
-			return;
-		}
-		if (bavards.contains(bavard)) {
-			return;
-		}
+		if (bavard == null || bavards.contains(bavard)) return;
 		bavards.add(bavard);
 	}
 
@@ -28,16 +23,8 @@ public class Reseau {
 	 * Cree un lien bidirectionnel entre deux bavards.
 	 */
 	public void connecter(Bavard premierBavard, Bavard deuxiemeBavard) {
-		if (premierBavard == null) {
-			return;
-		}
-		if (deuxiemeBavard == null) {
-			return;
-		}
-		if (premierBavard == deuxiemeBavard) {
-			return;
-		}
-		// lien dans les 2 sens
+		if (premierBavard == null || deuxiemeBavard == null) return;
+		if (premierBavard == deuxiemeBavard) return;
 		premierBavard.ajouterAmi(deuxiemeBavard);
 		deuxiemeBavard.ajouterAmi(premierBavard);
 	}
