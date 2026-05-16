@@ -30,6 +30,7 @@ import socialnetwork.back.stats.StatistiquesReseau;
  *
  * Mise a jour : appeler mettreAJour(stats, reseau) apres chaque propagation.
  */
+@SuppressWarnings("serial")
 public class VueStatistiquesGraphique extends JPanel {
 
 	private static final int     BUCKETS          = 5;

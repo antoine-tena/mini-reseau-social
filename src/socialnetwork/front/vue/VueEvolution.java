@@ -26,6 +26,7 @@ import socialnetwork.back.analyse.HistoriqueReseau.ClicheReseau;
  * Mise a jour : appeler {@code mettreAJour(HistoriqueReseau)} apres
  * chaque prise de cliche.
  */
+@SuppressWarnings("serial")
 public class VueEvolution extends JPanel {
 
 	private static final Color COL_BIENVEILLANCE = new Color(60,  110, 220);

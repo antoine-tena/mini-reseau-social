@@ -14,6 +14,7 @@ import java.util.UUID;
  *  - hopActuel / profondeurMax : controle de profondeur (-1 = infini)
  *  - transmissions : nombre de retransmissions subies
  */
+@SuppressWarnings("serial")
 public class MessageEvent extends EventObject {
 	private static final long serialVersionUID = 1L;
 

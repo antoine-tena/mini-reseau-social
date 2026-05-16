@@ -32,6 +32,7 @@ import socialnetwork.back.stats.JournalReseau;
  *   - export CSV vers le presse-papier
  *   - effacement avec confirmation
  */
+@SuppressWarnings("serial")
 public class VueJournal extends JPanel {
 
 	private final JournalReseau journal;

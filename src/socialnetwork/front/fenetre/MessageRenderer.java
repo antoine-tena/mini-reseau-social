@@ -23,6 +23,7 @@ import socialnetwork.back.model.MessageEvent;
  * Extrait de {@code FenetreBavard} pour pouvoir etre reutilise dans
  * d'autres composants de l'interface.
  */
+@SuppressWarnings("serial")
 public final class MessageRenderer extends DefaultListCellRenderer {
 
 	@Override

@@ -40,6 +40,7 @@ import socialnetwork.front.vue.VueEvolution;
  * Constructeur :
  *   FenetreAnalyse(Reseau, StatistiquesReseau, HistoriqueReseau)
  */
+@SuppressWarnings("serial")
 public class FenetreAnalyse extends JFrame {
 
 	private final Reseau             reseau;

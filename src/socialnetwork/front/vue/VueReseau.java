@@ -25,6 +25,7 @@ import socialnetwork.back.personnalite.Personnalite;
  * Panneau graphique qui dessine le reseau de bavards.
  * Noeuds colores par personnalite, liens entre amis.
  */
+@SuppressWarnings("serial")
 public class VueReseau extends JPanel implements BavardObserver {
 
 	protected final Reseau reseau;

@@ -45,6 +45,7 @@ import socialnetwork.back.stats.StatistiquesReseau;
  *
  * La simulation est non-bloquante : javax.swing.Timer sur l'EDT.
  */
+@SuppressWarnings("serial")
 public class FenetreSimulation extends javax.swing.JFrame {
 
 	// ─── Messages predefinies ─────────────────────────────────────────────────

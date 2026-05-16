@@ -25,6 +25,7 @@ import socialnetwork.back.observer.BavardObserver;
 /**
  * Fenetre d'un bavard : affiche messages/amis et permet d'emettre des actions.
  */
+@SuppressWarnings("serial")
 public class FenetreBavard extends JFrame implements BavardObserver {
 
 	private final Bavard bavard;

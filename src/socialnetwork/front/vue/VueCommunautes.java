@@ -23,6 +23,7 @@ import socialnetwork.back.model.Reseau;
  *
  * Mise a jour : appeler {@code actualiser(Reseau)} apres chaque detection.
  */
+@SuppressWarnings("serial")
 public class VueCommunautes extends VueReseau {
 
 	/** Palette de 8 couleurs vives pour distinguer les communautes. */

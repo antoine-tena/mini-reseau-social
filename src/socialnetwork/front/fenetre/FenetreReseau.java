@@ -39,6 +39,7 @@ import socialnetwork.front.vue.VueStatistiquesGraphique;
 /**
  * Fenetre principale : creation des bavards et actions sur le reseau.
  */
+@SuppressWarnings("serial")
 public class FenetreReseau extends JFrame {
 
 	private final Reseau reseau;
